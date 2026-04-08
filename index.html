@@ -101,16 +101,46 @@ input, textarea, select, button { font-family: inherit; }
 
 /* ===== SONG META FIELDS ===== */
 .song-meta-fields {
-  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
 }
 .song-meta-fields input {
   background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
   padding: 10px 12px; border-radius: 8px; font-size: 14px;
 }
 .song-meta-fields input:focus { outline: none; border-color: #e94560; }
-.song-meta-fields .f-title { flex: 2; min-width: 120px; }
 .song-meta-fields .f-key { width: 80px; }
 .song-meta-fields .f-bpm { width: 90px; }
+.song-title-input {
+  width: 100%; background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 10px 12px; border-radius: 8px; font-size: 16px; font-weight: 600;
+  font-family: 'Inter', sans-serif; margin-bottom: 8px;
+}
+.song-title-input:focus { outline: none; border-color: #e94560; }
+body.light-mode .song-title-input { background: #fff; border-color: #ddd; color: #1a1a2e; }
+.song-notes-field {
+  width: 100%; background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 8px 12px; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif;
+  resize: vertical; min-height: 32px; margin-bottom: 12px; line-height: 1.4;
+}
+/* History button & modal */
+.history-btn {
+  background: none; border: 1px solid #4a4a6a; color: #7a7a9a; padding: 6px 12px;
+  border-radius: 8px; font-size: 12px; cursor: pointer; margin-bottom: 12px;
+}
+.history-btn:hover { border-color: #e94560; color: #f0ece2; }
+.history-list { max-height: 400px; overflow-y: auto; }
+.history-entry { padding: 8px 0; border-bottom: 1px solid #2a2a4a; font-size: 13px; }
+.history-entry:last-child { border-bottom: none; }
+.history-date { color: #7a7a9a; font-size: 11px; }
+.history-cat { color: #e94560; font-weight: 600; margin: 0 6px; }
+.history-detail { color: #f0ece2; }
+body.light-mode .history-entry { border-bottom-color: #ddd; }
+body.light-mode .history-date { color: #999; }
+body.light-mode .history-detail { color: #1a1a2e; }
+.song-notes-field:focus { outline: none; border-color: #e94560; }
+.song-notes-field::placeholder { color: #4a4a6a; }
+body.light-mode .song-notes-field { background: #fff; border-color: #ddd; color: #1a1a2e; }
+body.light-mode .song-notes-field::placeholder { color: #bbb; }
 
 /* ===== TAB BAR ===== */
 .tab-bar {
@@ -408,6 +438,7 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
 @media print {
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
   #header, #bottomNav, .add-section-btn, .tab-bar, .song-meta-fields,
+  .song-title-input, .song-notes-field, .history-btn,
   .sec-actions, .drag-handle, #chordPopup, #sectionTypePicker,
   .modal-overlay, .list-toolbar, #darkModeToggle,
   .dot-row { display: none !important; }
@@ -418,6 +449,7 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
   .print-header { display: block !important; margin-bottom: 20px; }
   .print-header h1 { font-size: 24px; margin-bottom: 4px; color: #000; }
   .print-header .print-meta { font-size: 14px; color: #666; }
+  .print-header .print-notes { font-size: 12px; color: #444; margin-top: 4px; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
   .chord-section-block {
     background: #fff !important; border: none !important;
     page-break-inside: avoid; margin-bottom: 10px;
@@ -670,6 +702,17 @@ body.light-mode .section-edit-header .drag-handle { color: #ccc; }
   </div>
 </div>
 
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal-box">
+    <h3>&#128340; &Auml;nderungshistorie</h3>
+    <div class="history-list" id="historyList"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('historyModal').classList.remove('visible')">Schlie&szlig;en</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===============================================
 // DATA
@@ -741,29 +784,43 @@ function getChordColor(chord) {
   return chordColors[root] || '#4a4a6a';
 }
 
-// ===== CHORD LIST (ordered: major, minor, 7ths, extensions, etc.) =====
+// ===== CHORD LIST (musician-friendly: common chords first, exotic last) =====
 const chordRoots = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B','H'];
-// Ordered: major first, then minor, then 7th variants, then extensions
 const chordMods = [
-  '',         // Major
-  'm',        // Minor
+  // --- Most common (Dur/Moll) ---
+  '',         // Dur (Major)
+  'm',        // Moll (Minor)
+  // --- Dominant & Major 7 ---
   '7',        // Dominant 7
   'maj7',     // Major 7
-  'm7',       // Minor 7
+  'm7',       // Moll 7
+  // --- Suspended ---
   'sus2',     // Suspended 2
   'sus4',     // Suspended 4
+  // --- Added tones ---
   'add9',     // Add 9
   '6',        // Major 6
-  'm6',       // Minor 6
   '9',        // Dominant 9
-  'm9',       // Minor 9
-  'dim',      // Diminished
-  'dim7',     // Diminished 7
-  'aug',      // Augmented
+  // --- Less common minor variants ---
+  'm6',       // Moll 6
+  'm9',       // Moll 9
+  'mmaj7',    // Moll-Major 7
+  // --- Diminished / Augmented ---
+  'dim',      // Vermindert
+  'dim7',     // Vermindert 7
+  'aug',      // Uebermässig
+  // --- Extended / Jazz ---
   '11',       // 11th
   '13',       // 13th
-  '7sus4',    // 7 sus4
-  'mmaj7',    // Minor-major 7
+  '7sus4',    // Dominant 7 sus4
+  '7#9',      // Hendrix chord
+  'maj9',     // Major 9
+  '6/9',      // 6/9
+  '7b5',      // Dominant 7 flat 5
+  '7#5',      // Dominant 7 sharp 5
+  'm7b5',     // Half-diminished
+  'aug7',     // Augmented 7
+  '5',        // Power chord
 ];
 
 const allChords = [];
@@ -818,6 +875,11 @@ function showSongList() {
   document.getElementById('backBtn').style.display = 'none';
   document.getElementById('headerTitle').textContent = 'ChordSheet';
   document.getElementById('headerActions').innerHTML = '';
+  // Remove dynamically created song fields
+  ['songTitleInput','songNotesField','historyBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  });
   setActiveNav('navList');
   renderSongList();
 }
@@ -879,7 +941,8 @@ function printSong() {
   if (song.key) meta.push('Tonart: ' + song.key);
   if (song.bpm) meta.push(song.bpm + ' BPM');
   ph.innerHTML = '<h1>' + esc(song.title) + '</h1>' +
-    (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '');
+    (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '') +
+    (song.notes ? '<div class="print-notes">' + esc(song.notes) + '</div>' : '');
   setView('songView');
   document.getElementById('textEditTab').style.display = 'none';
   document.getElementById('chordEditTab').style.display = 'block';
@@ -951,10 +1014,43 @@ function renderSongList() {
 // ===============================================
 function createNewSong() {
   const song = { id: uid(), title: 'Neuer Song', key: '', bpm: null,
-    createdAt: new Date().toISOString(), sections: [] };
+    createdAt: new Date().toISOString(), notes: '', history: [], sections: [] };
+  addHistory(song, 'Erstellt');
   songs.unshift(song);
   saveSongs();
   showSong(song.id);
+}
+
+// ===== History =====
+function addHistory(song, category, detail) {
+  if (!song.history) song.history = [];
+  song.history.push({
+    timestamp: new Date().toISOString(),
+    category: category,
+    detail: detail || ''
+  });
+  // Keep last 100 entries
+  if (song.history.length > 100) song.history = song.history.slice(-100);
+}
+
+function showHistory() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const list = document.getElementById('historyList');
+  if (!song.history || !song.history.length) {
+    list.innerHTML = '<p style="color:#7a7a9a;text-align:center">Noch keine \u00C4nderungen erfasst.</p>';
+  } else {
+    list.innerHTML = [...song.history].reverse().map(h => {
+      const d = new Date(h.timestamp);
+      const dateStr = d.toLocaleDateString('de') + ' ' + d.toLocaleTimeString('de', {hour:'2-digit',minute:'2-digit'});
+      return '<div class="history-entry">' +
+        '<span class="history-date">' + dateStr + '</span>' +
+        '<span class="history-cat">' + esc(h.category) + '</span>' +
+        (h.detail ? '<span class="history-detail">' + esc(h.detail) + '</span>' : '') +
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('historyModal').classList.add('visible');
 }
 
 function duplicateSong(id) {
@@ -989,16 +1085,59 @@ function closeDeleteModal() { document.getElementById('deleteModal').classList.r
 function renderSongMeta() {
   const song = getSong(currentSongId);
   if (!song) return;
+  if (!song.notes) song.notes = '';
+  // Title input above meta fields
+  let titleEl = document.getElementById('songTitleInput');
+  if (!titleEl) {
+    titleEl = document.createElement('input');
+    titleEl.id = 'songTitleInput';
+    titleEl.className = 'song-title-input';
+    titleEl.placeholder = 'Songtitel';
+    titleEl.onchange = function() {
+      const val = this.value.trim() || 'Ohne Titel';
+      this.value = val;
+      updateField('title', val);
+      document.getElementById('headerTitle').textContent = val;
+      renderSongList();
+    };
+    document.getElementById('songMetaFields').before(titleEl);
+  }
+  titleEl.value = song.title;
   document.getElementById('songMetaFields').innerHTML =
-    '<input class="f-title" value="'+esc(song.title)+'" placeholder="Songtitel" onchange="updateField(\'title\',this.value)" onfocus="this.select()">' +
-    '<input class="f-key" value="'+esc(song.key||'')+'" placeholder="Key" onchange="updateField(\'key\',this.value)">' +
+    '<input class="f-key" value="'+esc(song.key||'')+'" placeholder="Tonart" onchange="updateField(\'key\',this.value)">' +
     '<input class="f-bpm" type="number" value="'+(song.bpm||'')+'" placeholder="BPM" onchange="updateField(\'bpm\',this.value?parseInt(this.value):null)">';
+  // Notes field rendered after the meta row
+  let notesEl = document.getElementById('songNotesField');
+  if (!notesEl) {
+    notesEl = document.createElement('textarea');
+    notesEl.id = 'songNotesField';
+    notesEl.className = 'song-notes-field';
+    notesEl.placeholder = 'Notizen, Interpret, Beschreibung...';
+    notesEl.onblur = function() { updateField('notes', this.value); };
+    document.getElementById('songMetaFields').after(notesEl);
+  }
+  notesEl.value = song.notes;
+  // History button after notes
+  let histBtn = document.getElementById('historyBtn');
+  if (!histBtn) {
+    histBtn = document.createElement('button');
+    histBtn.id = 'historyBtn';
+    histBtn.className = 'history-btn';
+    histBtn.textContent = '\u{1F552} \u00C4nderungshistorie';
+    histBtn.onclick = showHistory;
+    notesEl.after(histBtn);
+  }
 }
 function updateField(f, v) {
   const song = getSong(currentSongId);
   if (!song) return;
+  const labels = { title: 'Titel', key: 'Tonart', bpm: 'BPM', notes: 'Notizen' };
   song[f] = v;
-  if (f === 'title') document.getElementById('headerTitle').textContent = v;
+  if (f === 'title') {
+    document.getElementById('headerTitle').textContent = v;
+    renderSongList();
+  }
+  addHistory(song, labels[f] || f, String(v || ''));
   saveSongs();
 }
 
@@ -1024,9 +1163,10 @@ function startEditTitle() {
     span.textContent = val;
     span.onclick = startEditTitle;
     input.replaceWith(span);
-    // Also update meta field if visible
-    const metaInput = document.querySelector('.song-meta-fields .f-title');
-    if (metaInput) metaInput.value = val;
+    // Sync title input field and song list
+    const titleInput = document.getElementById('songTitleInput');
+    if (titleInput) titleInput.value = val;
+    renderSongList();
   }
 
   input.addEventListener('blur', finishEdit);
@@ -1079,7 +1219,10 @@ function onMainTextInput() {
 
 function onMainTextBlur() {
   const textarea = document.getElementById('mainTextarea');
+  const song = getSong(currentSongId);
   syncMainTextToSong(textarea.value);
+  if (song) addHistory(song, 'Text', 'Bearbeitet');
+  saveSongs();
   renderLineList();
 }
 
@@ -1226,6 +1369,7 @@ function assignSectionType(type) {
   }
 
   song.sections = newSections;
+  addHistory(song, 'Sektion', selectedLineIds.size + ' Zeile(n) \u2192 ' + type);
   selectedLineIds.clear();
   saveSongs();
   renderLineList();
@@ -1477,6 +1621,7 @@ function saveChord() {
   }
 
   recordChordUsage(val);
+  addHistory(song, 'Akkord', editingChord.chordId ? 'Ge\u00e4ndert: ' + val : 'Hinzugef\u00fcgt: ' + val);
   saveSongs();
   closeChordPopup();
   renderChordTab();
@@ -1495,6 +1640,7 @@ function deleteChord() {
     const ln = sec.lines.find(l => l.id === editingChord.lineId);
     ln.chords = ln.chords.filter(c => c.id !== editingChord.chordId);
   }
+  addHistory(song, 'Akkord', 'Entfernt');
   saveSongs();
   closeChordPopup();
   renderChordTab();
@@ -1588,7 +1734,7 @@ function createSongFromText(title, rawText) {
   const lines = allLines.map(t => ({ id: uid(), text: t, chords: [] }));
   if (!lines.length) lines.push({ id: uid(), text: '', chords: [] });
   const sections = [{ id: uid(), type: 'Verse', label: 'Verse', lines }];
-  const song = { id: uid(), title, key: '', bpm: null, createdAt: new Date().toISOString(), sections };
+  const song = { id: uid(), title, key: '', bpm: null, notes: '', createdAt: new Date().toISOString(), history: [], sections };
   songs.unshift(song);
   saveSongs();
   showSong(song.id);
