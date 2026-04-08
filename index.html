@@ -108,7 +108,19 @@ input, textarea, select, button { font-family: inherit; }
   padding: 10px 12px; border-radius: 8px; font-size: 14px;
 }
 .song-meta-fields input:focus { outline: none; border-color: #e94560; }
-.song-meta-fields .f-key { width: 80px; }
+.song-meta-fields .f-key {
+  width: 110px; background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 10px 8px; border-radius: 8px; font-size: 14px;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7a9a'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  cursor: pointer;
+}
+.song-meta-fields .f-key:focus { outline: none; border-color: #e94560; }
+body.light-mode .song-meta-fields .f-key {
+  background-color: #fff; border-color: #ddd; color: #1a1a2e;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+}
 .song-meta-fields .f-bpm { width: 90px; }
 .song-title-input {
   width: 100%; background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
@@ -439,6 +451,7 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
   #header, #bottomNav, .add-section-btn, .tab-bar, .song-meta-fields,
   .song-title-input, .song-notes-field, .history-btn,
+  .transpose-row, .playback-row,
   .sec-actions, .drag-handle, #chordPopup, #sectionTypePicker,
   .modal-overlay, .list-toolbar, #darkModeToggle,
   .dot-row { display: none !important; }
@@ -556,6 +569,52 @@ body.light-mode #pasteModal .modal-box textarea {
 }
 body.light-mode .sec-actions button { color: #999; }
 body.light-mode .section-edit-header .drag-handle { color: #ccc; }
+
+/* ===== TRANSPOSE BUTTONS ===== */
+.transpose-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.transpose-row .tp-label { font-size: 12px; color: #7a7a9a; }
+.transpose-btn {
+  background: #0f3460; color: #fff; border: none; width: 36px; height: 36px;
+  border-radius: 8px; font-size: 18px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.transpose-btn:active { background: #e94560; }
+body.light-mode .transpose-btn { background: #d5e8f0; color: #1a1a2e; }
+body.light-mode .transpose-btn:active { background: #e94560; color: #fff; }
+
+/* ===== PLAYBACK CONTROLS ===== */
+.playback-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.play-btn, .stop-btn {
+  background: #0f3460; color: #fff; border: none; width: 36px; height: 36px;
+  border-radius: 8px; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.play-btn:active, .stop-btn:active { background: #e94560; }
+.stop-btn { background: #e94560; }
+.instrument-select {
+  background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 8px 10px; border-radius: 8px; font-size: 13px;
+}
+.instrument-select:focus { outline: none; border-color: #e94560; }
+body.light-mode .play-btn, body.light-mode .stop-btn { background: #d5e8f0; color: #1a1a2e; }
+body.light-mode .stop-btn { background: #e94560; color: #fff; }
+body.light-mode .instrument-select { background: #fff; border-color: #ddd; color: #1a1a2e; }
+
+/* Highlight currently playing chord */
+@keyframes chord-pulse {
+  0% { transform: scale(1); box-shadow: none; }
+  50% { transform: scale(1.25); box-shadow: 0 0 12px rgba(233,69,96,0.7); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+.chord-playing {
+  animation: chord-pulse 0.5s ease-in-out infinite;
+  outline: 2px solid #e94560; outline-offset: 1px;
+  z-index: 10;
+}
 
 /* ===== DRAG ===== */
 .section-edit-block.dragging { opacity: 0.4; }
@@ -784,6 +843,48 @@ function getChordColor(chord) {
   return chordColors[root] || '#4a4a6a';
 }
 
+// ===== KEY DROPDOWN LIST =====
+const ALL_KEYS = [
+  'C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F',
+  'Am','Em','Bm','F#m','C#m','G#m','D#m','Bbm','Fm','Cm','Gm','Dm'
+];
+function getAccidentalPreference(key) {
+  if (!key) return 'neutral';
+  const sharpKeys = ['G','D','A','E','B','F#','Em','Bm','F#m','C#m','G#m','D#m'];
+  const flatKeys = ['F','Bb','Eb','Ab','Db','Gb','Dm','Gm','Cm','Fm','Bbm'];
+  if (sharpKeys.includes(key)) return 'sharp';
+  if (flatKeys.includes(key)) return 'flat';
+  return 'neutral'; // C, Am
+}
+
+// Enharmonic pairs: for each semitone, [sharp, flat]
+const ENHARMONIC_PAIRS = {1:['C#','Db'],3:['D#','Eb'],6:['F#','Gb'],8:['G#','Ab'],10:['A#','Bb']};
+// Get the preferred root name for a semitone given key preference
+function preferredRoot(semitone, pref) {
+  const pair = ENHARMONIC_PAIRS[semitone];
+  if (!pair) return CHROMATIC_SHARP[semitone]; // no enharmonic choice (C,D,E,F,G,A,B)
+  if (pref === 'flat') return pair[1];
+  if (pref === 'sharp') return pair[0];
+  return pair[0]; // neutral defaults to sharp
+}
+
+// Filter chordRoots based on key preference (remove duplicate enharmonics)
+function getFilteredRoots(pref) {
+  const seen = new Set();
+  const result = [];
+  for (const r of chordRoots) {
+    if (r === 'H') { result.push(r); continue; } // always include H
+    const semi = noteToSemitone(r);
+    if (semi === undefined) continue;
+    const preferred = preferredRoot(semi, pref);
+    if (!seen.has(semi)) {
+      seen.add(semi);
+      result.push(preferred);
+    }
+  }
+  return result;
+}
+
 // ===== CHORD LIST (musician-friendly: common chords first, exotic last) =====
 const chordRoots = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B','H'];
 const chordMods = [
@@ -830,11 +931,25 @@ chordRoots.forEach(r => {
   ['C','D','E','F','G','A','B'].forEach(b => { if (b !== r.charAt(0)) allChords.push(r+'/'+b); });
 });
 
+function getKeyFilteredChords() {
+  const song = getSong(currentSongId);
+  const pref = getAccidentalPreference(song ? song.key : 'C');
+  const roots = getFilteredRoots(pref);
+  const filtered = [];
+  roots.forEach(r => chordMods.forEach(m => filtered.push(r + m)));
+  // Slash chords with filtered bass notes
+  roots.forEach(r => {
+    roots.forEach(b => { if (b !== 'H' && b !== r && b.charAt(0) !== r.charAt(0)) filtered.push(r+'/'+b); });
+  });
+  return filtered;
+}
+
 function filterChords(q) {
-  if (!q) return allChords.slice(0, 20); // show initial list when empty
+  const pool = getKeyFilteredChords();
+  if (!q) return pool.slice(0, 20);
   const ql = q.toLowerCase();
   const exact = [], starts = [], contains = [];
-  for (const c of allChords) {
+  for (const c of pool) {
     const cl = c.toLowerCase();
     if (cl === ql) exact.push(c);
     else if (cl.startsWith(ql)) starts.push(c);
@@ -863,6 +978,10 @@ function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 // ===============================================
 function loadSongs() {
   try { songs = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { songs = []; }
+  // Ensure all songs have a key (default to C)
+  let changed = false;
+  songs.forEach(s => { if (!s.key) { s.key = 'C'; changed = true; } });
+  if (changed) saveSongs();
 }
 function saveSongs() { localStorage.setItem(STORAGE_KEY, JSON.stringify(songs)); }
 function getSong(id) { return songs.find(s => s.id === id); }
@@ -876,7 +995,8 @@ function showSongList() {
   document.getElementById('headerTitle').textContent = 'ChordSheet';
   document.getElementById('headerActions').innerHTML = '';
   // Remove dynamically created song fields
-  ['songTitleInput','songNotesField','historyBtn'].forEach(id => {
+  stopPlayback();
+  ['songTitleInput','songNotesField','historyBtn','transposeRow','playbackRow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.remove();
   });
@@ -1013,7 +1133,7 @@ function renderSongList() {
 // SONG CRUD
 // ===============================================
 function createNewSong() {
-  const song = { id: uid(), title: 'Neuer Song', key: '', bpm: null,
+  const song = { id: uid(), title: 'Neuer Song', key: 'C', bpm: null,
     createdAt: new Date().toISOString(), notes: '', history: [], sections: [] };
   addHistory(song, 'Erstellt');
   songs.unshift(song);
@@ -1103,8 +1223,13 @@ function renderSongMeta() {
     document.getElementById('songMetaFields').before(titleEl);
   }
   titleEl.value = song.title;
+  const keyOptions = ALL_KEYS.map(k =>
+    '<option value="'+esc(k)+'"'+(song.key===k?' selected':'')+'>'+esc(k)+'</option>'
+  ).join('');
   document.getElementById('songMetaFields').innerHTML =
-    '<input class="f-key" value="'+esc(song.key||'')+'" placeholder="Tonart" onchange="updateField(\'key\',this.value)">' +
+    '<span style="font-size:13px;color:#7a7a9a;margin-right:2px">Key:</span>' +
+    '<select class="f-key" onchange="changeKey(this.value)">' +
+    '<option value="" disabled>Tonart</option>' + keyOptions + '</select>' +
     '<input class="f-bpm" type="number" value="'+(song.bpm||'')+'" placeholder="BPM" onchange="updateField(\'bpm\',this.value?parseInt(this.value):null)">';
   // Notes field rendered after the meta row
   let notesEl = document.getElementById('songNotesField');
@@ -1117,7 +1242,35 @@ function renderSongMeta() {
     document.getElementById('songMetaFields').after(notesEl);
   }
   notesEl.value = song.notes;
-  // History button after notes
+  // Transpose row after notes
+  let tpRow = document.getElementById('transposeRow');
+  if (!tpRow) {
+    tpRow = document.createElement('div');
+    tpRow.id = 'transposeRow';
+    tpRow.className = 'transpose-row';
+    tpRow.innerHTML = '<span class="tp-label">Transponieren:</span>' +
+      '<button class="transpose-btn" onclick="transposeSong(-1)" title="Halbton runter">&minus;</button>' +
+      '<button class="transpose-btn" onclick="transposeSong(1)" title="Halbton hoch">+</button>';
+    notesEl.after(tpRow);
+  }
+  // Playback row
+  let pbRow = document.getElementById('playbackRow');
+  if (!pbRow) {
+    pbRow = document.createElement('div');
+    pbRow.id = 'playbackRow';
+    pbRow.className = 'playback-row';
+    pbRow.innerHTML = '<button class="play-btn" id="playBtn" onclick="playSong()" title="Abspielen">&#9654;</button>' +
+      '<button class="stop-btn" id="stopBtn" onclick="stopPlayback()" title="Stop" style="display:none">&#9724;</button>' +
+      '<select class="instrument-select" id="instrumentSelect" onchange="localStorage.setItem(\'chordsheet_instrument\',this.value)">' +
+      '<option value="synth">Synth</option><option value="piano">Piano</option>' +
+      '<option value="guitar">Gitarre</option><option value="eguitar">E-Gitarre</option>' +
+      '<option value="xylophone">Xylophon</option></select>';
+    tpRow.after(pbRow);
+    // Restore instrument preference
+    const savedInstr = localStorage.getItem('chordsheet_instrument');
+    if (savedInstr) document.getElementById('instrumentSelect').value = savedInstr;
+  }
+  // History button after playback
   let histBtn = document.getElementById('historyBtn');
   if (!histBtn) {
     histBtn = document.createElement('button');
@@ -1125,7 +1278,7 @@ function renderSongMeta() {
     histBtn.className = 'history-btn';
     histBtn.textContent = '\u{1F552} \u00C4nderungshistorie';
     histBtn.onclick = showHistory;
-    notesEl.after(histBtn);
+    pbRow.after(histBtn);
   }
 }
 function updateField(f, v) {
@@ -1139,6 +1292,39 @@ function updateField(f, v) {
   }
   addHistory(song, labels[f] || f, String(v || ''));
   saveSongs();
+}
+
+function changeKey(newKey) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const oldKey = song.key || 'C';
+  if (oldKey === newKey) { updateField('key', newKey); return; }
+  // Calculate semitone difference
+  const oldParsed = parseChordRoot(oldKey);
+  const newParsed = parseChordRoot(newKey);
+  if (!oldParsed || !newParsed) { updateField('key', newKey); return; }
+  const oldSemi = noteToSemitone(oldParsed.root);
+  const newSemi = noteToSemitone(newParsed.root);
+  if (oldSemi === undefined || newSemi === undefined) { updateField('key', newKey); return; }
+  const steps = ((newSemi - oldSemi) % 12 + 12) % 12;
+  // Use shortest path: if > 6 semitones up, go down instead
+  const actualSteps = steps > 6 ? steps - 12 : steps;
+  // Set key first, then transpose chords with new preference
+  song.key = newKey;
+  const pref = getAccidentalPreference(newKey);
+  song.sections.forEach(sec => {
+    sec.lines.forEach(ln => {
+      ln.chords.forEach(ch => { ch.chord = transposeChord(ch.chord, actualSteps, pref); });
+    });
+    if (sec._spacerChords) {
+      Object.values(sec._spacerChords).forEach(arr => {
+        arr.forEach(ch => { ch.chord = transposeChord(ch.chord, actualSteps, pref); });
+      });
+    }
+  });
+  addHistory(song, 'Tonart', oldKey + ' \u2192 ' + newKey);
+  saveSongs();
+  if (currentTab === 'chords') renderChordTab();
 }
 
 // ===== Editable Title (click on header) =====
@@ -1541,17 +1727,18 @@ function openChordPopup(value, x, y, showDelete) {
   updateAutocomplete();
 }
 
-// ===== Note Picker: Base notes only, click = type letter =====
-const PICK_ROOTS = ['C','D','E','F','G','A','B','H'];
-
+// ===== Note Picker: Base notes, filtered by key preference =====
 function renderNotePicker() {
+  const song = getSong(currentSongId);
+  const pref = getAccidentalPreference(song ? song.key : 'C');
+  const roots = getFilteredRoots(pref);
   const section = document.getElementById('notePickerSection');
   let html = '<div class="quick-pick-section">' +
     '<div class="quick-pick-label">Grundton</div>' +
     '<div class="quick-pick-row">';
-  PICK_ROOTS.forEach(r => {
+  roots.forEach(r => {
     html += '<button class="quick-pick-btn" style="background:' + getChordColor(r) +
-      '" onclick="pickRoot(\'' + r + '\')">' + r + '</button>';
+      '" onclick="pickRoot(\'' + esc(r) + '\')">' + esc(r) + '</button>';
   });
   html += '</div></div>';
   section.innerHTML = html;
@@ -1734,7 +1921,7 @@ function createSongFromText(title, rawText) {
   const lines = allLines.map(t => ({ id: uid(), text: t, chords: [] }));
   if (!lines.length) lines.push({ id: uid(), text: '', chords: [] });
   const sections = [{ id: uid(), type: 'Verse', label: 'Verse', lines }];
-  const song = { id: uid(), title, key: '', bpm: null, notes: '', createdAt: new Date().toISOString(), history: [], sections };
+  const song = { id: uid(), title, key: 'C', bpm: null, notes: '', createdAt: new Date().toISOString(), history: [], sections };
   songs.unshift(song);
   saveSongs();
   showSong(song.id);
@@ -1824,6 +2011,421 @@ document.addEventListener('click', (e) => {
   }
 });
 
+
+// ===============================================
+// TRANSPOSE
+// ===============================================
+const CHROMATIC_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const CHROMATIC_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+// Map any note name to a semitone index (0=C)
+function noteToSemitone(note) {
+  const map = {'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'Fb':4,'E#':5,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11,'H':11,'Cb':11,'B#':0};
+  return map[note];
+}
+// Parse a chord string into { root, modifier } — root can be 'C#', 'Db', etc.
+function parseChordRoot(chord) {
+  if (!chord) return null;
+  // Handle H as B
+  let c = chord;
+  let root;
+  if (c.length >= 2 && (c[1] === '#' || c[1] === 'b')) {
+    root = c.slice(0,2);
+    return { root, modifier: c.slice(2) };
+  }
+  root = c[0];
+  return { root, modifier: c.slice(1) };
+}
+function transposeNote(note, steps, pref) {
+  const semi = noteToSemitone(note);
+  if (semi === undefined) return note;
+  const newSemi = ((semi + steps) % 12 + 12) % 12;
+  // Use key-based accidental preference if available
+  if (pref) return preferredRoot(newSemi, pref);
+  // Fallback: sharps up, flats down
+  if (steps > 0) return CHROMATIC_SHARP[newSemi];
+  if (steps < 0) return CHROMATIC_FLAT[newSemi];
+  return CHROMATIC_SHARP[newSemi];
+}
+function transposeChord(chord, steps, pref) {
+  if (!chord) return chord;
+  // Handle slash chords: e.g. G/B
+  const slashIdx = chord.indexOf('/');
+  if (slashIdx > 0) {
+    const left = transposeChord(chord.slice(0, slashIdx), steps, pref);
+    const rightPart = chord.slice(slashIdx + 1);
+    const rightParsed = parseChordRoot(rightPart);
+    if (rightParsed && noteToSemitone(rightParsed.root) !== undefined) {
+      return left + '/' + transposeNote(rightParsed.root, steps, pref) + rightParsed.modifier;
+    }
+    return left + '/' + rightPart;
+  }
+  const parsed = parseChordRoot(chord);
+  if (!parsed || noteToSemitone(parsed.root) === undefined) return chord;
+  return transposeNote(parsed.root, steps, pref) + parsed.modifier;
+}
+function transposeSong(steps) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  // Compute new key first to derive accidental preference
+  let newKey = song.key || 'C';
+  const keyParsed = parseChordRoot(newKey);
+  if (keyParsed && noteToSemitone(keyParsed.root) !== undefined) {
+    // Transpose the key note
+    const keySemi = noteToSemitone(keyParsed.root);
+    const newSemi = ((keySemi + steps) % 12 + 12) % 12;
+    // Find the matching key from ALL_KEYS
+    const mod = keyParsed.modifier; // e.g. 'm' for minor keys
+    const matchKey = ALL_KEYS.find(k => {
+      const p = parseChordRoot(k);
+      return p && noteToSemitone(p.root) === newSemi && p.modifier === mod;
+    });
+    if (matchKey) {
+      newKey = matchKey;
+    } else {
+      // Fallback: use direction-based preference
+      newKey = (steps > 0 ? CHROMATIC_SHARP[newSemi] : CHROMATIC_FLAT[newSemi]) + mod;
+    }
+  }
+  // Get accidental preference from the TARGET key
+  const pref = getAccidentalPreference(newKey);
+  // Transpose all chords with target key preference
+  song.sections.forEach(sec => {
+    sec.lines.forEach(ln => {
+      ln.chords.forEach(ch => { ch.chord = transposeChord(ch.chord, steps, pref); });
+    });
+    if (sec._spacerChords) {
+      Object.values(sec._spacerChords).forEach(arr => {
+        arr.forEach(ch => { ch.chord = transposeChord(ch.chord, steps, pref); });
+      });
+    }
+  });
+  // Update key
+  song.key = newKey;
+  addHistory(song, 'Transponiert', steps > 0 ? '+' + steps + ' Halbton(e)' : steps + ' Halbton(e)');
+  saveSongs();
+  // Re-render meta (updates dropdown) and chord tab
+  renderSongMeta();
+  if (currentTab === 'chords') renderChordTab();
+}
+
+// ===============================================
+// PLAYBACK (Web Audio API)
+// ===============================================
+let audioCtx = null;
+let playbackTimer = null;
+let playbackChords = [];
+let playbackIndex = 0;
+let isPlaying = false;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Note frequencies (A4 = 440Hz)
+const NOTE_FREQ = {};
+(function() {
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  for (let oct = 0; oct <= 8; oct++) {
+    for (let i = 0; i < 12; i++) {
+      const midi = oct * 12 + i + 12; // C0=12
+      NOTE_FREQ[names[i] + oct] = 440 * Math.pow(2, (midi - 69) / 12);
+    }
+  }
+})();
+
+function getNoteFreq(noteName, octave) {
+  // Map flats and H
+  const flatMap = {'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#','H':'B','Cb':'B','Fb':'E'};
+  const n = flatMap[noteName] || noteName;
+  return NOTE_FREQ[n + octave] || 261.63;
+}
+
+// Get chord tones as semitone intervals from root
+function getChordIntervals(modifier) {
+  const m = (modifier || '').toLowerCase();
+  // Power chord
+  if (m === '5') return [0, 7];
+  // Minor variants
+  if (m === 'm7b5') return [0, 3, 6, 10];
+  if (m === 'mmaj7') return [0, 3, 7, 11];
+  if (m === 'm6') return [0, 3, 7, 9];
+  if (m === 'm9') return [0, 3, 7, 10, 14];
+  if (m === 'm7') return [0, 3, 7, 10];
+  if (m === 'm') return [0, 3, 7];
+  // Diminished
+  if (m === 'dim7') return [0, 3, 6, 9];
+  if (m === 'dim') return [0, 3, 6];
+  // Augmented
+  if (m === 'aug7') return [0, 4, 8, 10];
+  if (m === 'aug') return [0, 4, 8];
+  // Suspended
+  if (m === '7sus4') return [0, 5, 7, 10];
+  if (m === 'sus2') return [0, 2, 7];
+  if (m === 'sus4') return [0, 5, 7];
+  // Seventh variants
+  if (m === 'maj9') return [0, 4, 7, 11, 14];
+  if (m === 'maj7') return [0, 4, 7, 11];
+  if (m === '7#9') return [0, 4, 7, 10, 15];
+  if (m === '7b5') return [0, 4, 6, 10];
+  if (m === '7#5') return [0, 4, 8, 10];
+  if (m === '7') return [0, 4, 7, 10];
+  // Extended
+  if (m === '13') return [0, 4, 7, 10, 14, 21];
+  if (m === '11') return [0, 4, 7, 10, 14, 17];
+  if (m === '9') return [0, 4, 7, 10, 14];
+  if (m === '6/9') return [0, 4, 7, 9, 14];
+  if (m === '6') return [0, 4, 7, 9];
+  if (m === 'add9') return [0, 4, 7, 14];
+  // Default major
+  return [0, 4, 7];
+}
+
+function getChordFrequencies(chordName) {
+  const parsed = parseChordRoot(chordName);
+  if (!parsed) return [261.63, 329.63, 392.0]; // fallback C major
+  const rootSemi = noteToSemitone(parsed.root);
+  if (rootSemi === undefined) return [261.63, 329.63, 392.0];
+  const intervals = getChordIntervals(parsed.modifier);
+  const baseOctave = 4; // Play around middle C
+  return intervals.map(iv => {
+    const semi = rootSemi + iv;
+    const oct = baseOctave + Math.floor(semi / 12);
+    const noteIdx = ((semi % 12) + 12) % 12;
+    const noteName = CHROMATIC_SHARP[noteIdx];
+    return getNoteFreq(noteName, oct);
+  });
+}
+
+// ===== Instrument synthesis =====
+function playSynth(ctx, freqs, startTime, duration) {
+  const gain = ctx.createGain();
+  gain.connect(ctx.destination);
+  gain.gain.setValueAtTime(0.15, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  freqs.forEach(f => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = f;
+    osc.connect(gain);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  });
+}
+
+function playPiano(ctx, freqs, startTime, duration) {
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+  master.gain.setValueAtTime(0.2, startTime);
+  master.gain.setValueAtTime(0.18, startTime + 0.01);
+  master.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  freqs.forEach(f => {
+    // Fundamental
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sine'; osc1.frequency.value = f;
+    const g1 = ctx.createGain(); g1.gain.value = 0.6;
+    osc1.connect(g1); g1.connect(master);
+    osc1.start(startTime); osc1.stop(startTime + duration);
+    // 2nd harmonic
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine'; osc2.frequency.value = f * 2;
+    const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    osc2.connect(g2); g2.connect(master);
+    osc2.start(startTime); osc2.stop(startTime + duration);
+    // 3rd harmonic
+    const osc3 = ctx.createOscillator();
+    osc3.type = 'sine'; osc3.frequency.value = f * 3;
+    const g3 = ctx.createGain(); g3.gain.value = 0.1;
+    osc3.connect(g3); g3.connect(master);
+    osc3.start(startTime); osc3.stop(startTime + duration);
+  });
+}
+
+function playGuitar(ctx, freqs, startTime, duration) {
+  // Karplus-Strong inspired: short noise burst filtered
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+  master.gain.setValueAtTime(0.2, startTime);
+  master.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.9);
+  master.gain.setValueAtTime(0.001, startTime + duration);
+  freqs.forEach(f => {
+    // Use triangle wave for plucky sound
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle'; osc.frequency.value = f;
+    // Add a quick attack transient with noise-like burst
+    const transient = ctx.createOscillator();
+    transient.type = 'sawtooth'; transient.frequency.value = f * 1.002;
+    const tGain = ctx.createGain();
+    tGain.gain.setValueAtTime(0.15, startTime);
+    tGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.08);
+    transient.connect(tGain); tGain.connect(master);
+    transient.start(startTime); transient.stop(startTime + 0.1);
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(3000, startTime);
+    filter.frequency.exponentialRampToValueAtTime(800, startTime + duration * 0.5);
+    osc.connect(filter); filter.connect(master);
+    osc.start(startTime); osc.stop(startTime + duration);
+  });
+}
+
+function playEGuitar(ctx, freqs, startTime, duration) {
+  // Guitar + distortion waveshaper
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+  master.gain.setValueAtTime(0.15, startTime);
+  master.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+  // Waveshaper for distortion
+  const distortion = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i / 128) - 1;
+    curve[i] = (Math.PI + 20) * x / (Math.PI + 20 * Math.abs(x));
+  }
+  distortion.curve = curve;
+  distortion.oversample = '2x';
+  distortion.connect(master);
+  const preGain = ctx.createGain();
+  preGain.gain.value = 2.5;
+  preGain.connect(distortion);
+  freqs.forEach(f => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth'; osc.frequency.value = f;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 2500;
+    osc.connect(filter); filter.connect(preGain);
+    osc.start(startTime); osc.stop(startTime + duration);
+  });
+}
+
+function playXylophone(ctx, freqs, startTime, duration) {
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+  master.gain.setValueAtTime(0.25, startTime);
+  master.gain.exponentialRampToValueAtTime(0.001, startTime + Math.min(duration, 0.6));
+  freqs.forEach(f => {
+    // Bright fundamental
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sine'; osc1.frequency.value = f;
+    const g1 = ctx.createGain(); g1.gain.value = 0.5;
+    osc1.connect(g1); g1.connect(master);
+    osc1.start(startTime); osc1.stop(startTime + duration);
+    // High partial for brightness
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine'; osc2.frequency.value = f * 3;
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.3, startTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+    osc2.connect(g2); g2.connect(master);
+    osc2.start(startTime); osc2.stop(startTime + duration);
+    // Even higher partial
+    const osc3 = ctx.createOscillator();
+    osc3.type = 'sine'; osc3.frequency.value = f * 5.4;
+    const g3 = ctx.createGain();
+    g3.gain.setValueAtTime(0.15, startTime);
+    g3.gain.exponentialRampToValueAtTime(0.001, startTime + 0.08);
+    osc3.connect(g3); g3.connect(master);
+    osc3.start(startTime); osc3.stop(startTime + duration);
+  });
+}
+
+function playChordSound(chordName, instrument) {
+  const ctx = getAudioCtx();
+  const freqs = getChordFrequencies(chordName);
+  const now = ctx.currentTime;
+  const dur = 0.95;
+  switch(instrument) {
+    case 'piano': playPiano(ctx, freqs, now, dur); break;
+    case 'guitar': playGuitar(ctx, freqs, now, dur); break;
+    case 'eguitar': playEGuitar(ctx, freqs, now, dur); break;
+    case 'xylophone': playXylophone(ctx, freqs, now, dur); break;
+    default: playSynth(ctx, freqs, now, dur);
+  }
+}
+
+// Collect all chords in order for playback
+function collectPlaybackChords() {
+  const song = getSong(currentSongId);
+  if (!song) return [];
+  const chords = [];
+  song.sections.forEach(sec => {
+    // Pre-spacer
+    if (sec._spacerChords && sec._spacerChords['__pre0']) {
+      sec._spacerChords['__pre0'].sort((a,b) => a.charIndex - b.charIndex)
+        .forEach(ch => chords.push({ chord: ch.chord, secId: sec.id, lineId: 'spacer_' + sec.id + '__pre0', chordId: ch.id }));
+    }
+    sec.lines.forEach((ln, i) => {
+      // Line chords
+      [...ln.chords].sort((a,b) => a.charIndex - b.charIndex)
+        .forEach(ch => chords.push({ chord: ch.chord, secId: sec.id, lineId: ln.id, chordId: ch.id }));
+      // Post-spacer
+      const spId = '__post' + i;
+      if (sec._spacerChords && sec._spacerChords[spId]) {
+        sec._spacerChords[spId].sort((a,b) => a.charIndex - b.charIndex)
+          .forEach(ch => chords.push({ chord: ch.chord, secId: sec.id, lineId: 'spacer_' + sec.id + spId, chordId: ch.id }));
+      }
+    });
+  });
+  return chords;
+}
+
+function highlightChord(chordId) {
+  // Remove previous highlights
+  document.querySelectorAll('.chord-playing').forEach(el => el.classList.remove('chord-playing'));
+  if (!chordId) return;
+  // Find the placed-chord or print-badge with this chordId
+  // Chords are in dot-cells with onclick containing the chordId
+  const allBadges = document.querySelectorAll('.placed-chord');
+  allBadges.forEach(badge => {
+    const cell = badge.closest('.dot-cell');
+    if (cell) {
+      const onclick = cell.getAttribute('onclick') || '';
+      if (onclick.includes(chordId)) badge.classList.add('chord-playing');
+    }
+  });
+}
+
+function playSong() {
+  if (isPlaying) stopPlayback();
+  const song = getSong(currentSongId);
+  if (!song) return;
+  // Switch to chord tab so chords are visible
+  if (currentTab !== 'chords') switchTab('chords');
+  playbackChords = collectPlaybackChords();
+  if (!playbackChords.length) return;
+  playbackIndex = 0;
+  isPlaying = true;
+  document.getElementById('playBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'flex';
+  playNextChord();
+}
+
+function playNextChord() {
+  if (!isPlaying || playbackIndex >= playbackChords.length) {
+    stopPlayback();
+    return;
+  }
+  const entry = playbackChords[playbackIndex];
+  const instrument = document.getElementById('instrumentSelect') ?
+    document.getElementById('instrumentSelect').value : 'synth';
+  highlightChord(entry.chordId);
+  playChordSound(entry.chord, instrument);
+  playbackIndex++;
+  playbackTimer = setTimeout(playNextChord, 1000);
+}
+
+function stopPlayback() {
+  isPlaying = false;
+  if (playbackTimer) { clearTimeout(playbackTimer); playbackTimer = null; }
+  highlightChord(null);
+  playbackChords = [];
+  playbackIndex = 0;
+  const playBtn = document.getElementById('playBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  if (playBtn) playBtn.style.display = 'flex';
+  if (stopBtn) stopBtn.style.display = 'none';
+}
 
 // ===============================================
 // INIT
