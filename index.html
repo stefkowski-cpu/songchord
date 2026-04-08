@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ChordSheet – Chord & Lyrics Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: #1a1a2e;
+  color: #f0ece2;
+  min-height: 100vh;
+  padding-top: 56px;
+  padding-bottom: 64px;
+  overflow-x: hidden;
+}
+input, textarea, select, button { font-family: inherit; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #16213e; }
+::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
+
+/* ===== HEADER ===== */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: #16213e; border-bottom: 1px solid #2a2a4a;
+  display: flex; align-items: center; height: 56px; padding: 0 12px;
+}
+#header .back-btn {
+  background: none; border: none; color: #f0ece2; font-size: 22px;
+  cursor: pointer; padding: 8px; margin-right: 4px; display: none;
+}
+#header .title {
+  flex: 1; font-size: 18px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+#header .actions { display: flex; gap: 4px; }
+#header .actions button {
+  background: none; border: none; color: #f0ece2; font-size: 18px;
+  cursor: pointer; padding: 8px; border-radius: 8px;
+}
+#header .actions button:active { background: rgba(255,255,255,0.1); }
+
+/* ===== BOTTOM NAV ===== */
+#bottomNav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: #16213e; border-top: 1px solid #2a2a4a;
+  display: flex; height: 60px;
+}
+#bottomNav button {
+  flex: 1; background: none; border: none; color: #7a7a9a;
+  font-size: 11px; font-family: 'Inter', sans-serif; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+#bottomNav button .icon { font-size: 22px; }
+#bottomNav button.active { color: #e94560; }
+#bottomNav button:disabled { opacity: 0.3; }
+
+/* ===== VIEWS ===== */
+.view { display: none; padding: 12px; max-width: 800px; margin: 0 auto; }
+.view.active { display: block; }
+
+/* ===== SONG LIST ===== */
+.list-toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.toolbar-btn {
+  background: #e94560; color: #fff; border: none; padding: 10px 16px;
+  border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.toolbar-btn.secondary { background: #0f3460; }
+.toolbar-btn input[type="file"] { display: none; }
+
+.song-card {
+  background: #16213e; border-radius: 10px; padding: 14px;
+  margin-bottom: 10px; cursor: pointer; border: 1px solid #2a2a4a;
+  display: flex; align-items: center; gap: 12px;
+}
+.song-card:active { border-color: #e94560; }
+.song-card .info { flex: 1; min-width: 0; }
+.song-card .info .song-title {
+  font-size: 16px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.song-card .info .song-meta { font-size: 12px; color: #7a7a9a; margin-top: 2px; }
+.song-card .card-actions { display: flex; gap: 2px; }
+.song-card .card-actions button {
+  background: none; border: none; color: #7a7a9a; font-size: 16px;
+  cursor: pointer; padding: 6px; border-radius: 6px;
+}
+.song-card .card-actions button:active { background: rgba(255,255,255,0.1); }
+
+.empty-state {
+  text-align: center; color: #7a7a9a; margin-top: 60px;
+  font-size: 15px; line-height: 1.6;
+}
+.empty-state .big { font-size: 48px; margin-bottom: 12px; }
+
+/* ===== SONG META FIELDS ===== */
+.song-meta-fields {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.song-meta-fields input {
+  background: #16213e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 10px 12px; border-radius: 8px; font-size: 14px;
+}
+.song-meta-fields input:focus { outline: none; border-color: #e94560; }
+.song-meta-fields .f-title { flex: 2; min-width: 120px; }
+.song-meta-fields .f-key { width: 80px; }
+.song-meta-fields .f-bpm { width: 90px; }
+
+/* ===== TAB BAR ===== */
+.tab-bar {
+  display: flex; gap: 0; margin-bottom: 16px; border-radius: 10px;
+  overflow: hidden; border: 1px solid #2a2a4a;
+}
+.tab-bar button {
+  flex: 1; padding: 12px; border: none; background: #16213e;
+  color: #7a7a9a; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.tab-bar button.active { background: #e94560; color: #fff; }
+
+/* ===== TEXT EDIT TAB ===== */
+.section-edit-block {
+  background: #16213e; border-radius: 10px; margin-bottom: 12px;
+  border: 1px solid #2a2a4a; overflow: hidden;
+}
+.section-edit-header {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  border-bottom: 1px solid #2a2a4a; cursor: grab;
+}
+.section-edit-header .drag-handle { color: #4a4a6a; font-size: 18px; }
+.section-badge {
+  font-size: 12px; font-weight: 700; padding: 3px 10px;
+  border-radius: 12px; color: #fff; white-space: nowrap;
+}
+.section-badge.Intro, .section-badge.Outro { background: #4a4a6a; }
+.section-badge.Verse { background: #0f3460; }
+.section-badge.Pre-Chorus { background: #1a5276; }
+.section-badge.Chorus { background: #e67e22; }
+.section-badge.Bridge { background: #8e44ad; }
+.section-badge.Solo { background: #c0392b; }
+.section-badge.Interlude { background: #4a4a6a; }
+
+.section-edit-header select {
+  background: #1a1a2e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 4px 8px; border-radius: 6px; font-size: 12px;
+}
+.section-label-input {
+  background: none; border: none; color: #f0ece2; font-size: 14px;
+  font-weight: 600; flex: 1; min-width: 60px;
+}
+.section-label-input:focus { outline: none; }
+.section-edit-header .sec-actions button {
+  background: none; border: none; color: #7a7a9a; font-size: 16px;
+  cursor: pointer; padding: 4px 6px; border-radius: 6px;
+}
+
+.section-edit-body { padding: 0; }
+.section-textarea {
+  width: 100%; min-height: 100px; background: #1a1a2e; border: none;
+  color: #f0ece2; padding: 12px; font-family: 'Courier Prime', monospace;
+  font-size: 15px; line-height: 1.6; resize: vertical;
+}
+.section-textarea:focus { outline: none; }
+.section-textarea::placeholder { color: #4a4a6a; }
+
+.add-section-btn {
+  background: #e94560; color: #fff; border: none; padding: 12px;
+  border-radius: 10px; width: 100%; font-size: 15px; font-weight: 600;
+  cursor: pointer; margin-top: 8px;
+}
+
+/* ===== CHORD EDIT TAB ===== */
+.chord-section-block {
+  background: #16213e; border-radius: 10px; margin-bottom: 14px;
+  border: 1px solid #2a2a4a; overflow: hidden;
+}
+.chord-section-header {
+  padding: 10px 12px; border-bottom: 1px solid #2a2a4a;
+  display: flex; align-items: center; gap: 8px;
+}
+.chord-section-body { padding: 12px; overflow-x: auto; }
+
+.chord-line-block { margin-bottom: 0; }
+
+/* Dot row */
+.dot-row {
+  display: flex; height: 28px; align-items: flex-end; user-select: none;
+}
+.dot-row.spacer-row { height: 28px; }
+.dot-cell {
+  width: 9.6px; height: 28px; display: flex; align-items: flex-end;
+  justify-content: center; cursor: pointer; position: relative;
+  flex-shrink: 0;
+}
+.dot-cell .dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #2a2a4a;
+  transition: background 0.15s, transform 0.15s;
+  margin-bottom: 2px;
+}
+.dot-cell:hover .dot { background: #e94560; transform: scale(1.5); }
+.dot-cell.has-chord .dot { display: none; }
+.dot-cell .placed-chord {
+  position: absolute; bottom: 0; left: 0;
+  padding: 1px 5px; border-radius: 4px; color: #fff; font-size: 12px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  white-space: nowrap; line-height: 18px; cursor: pointer; z-index: 2;
+}
+
+.text-display-row {
+  font-family: 'Courier Prime', monospace; font-size: 15px;
+  white-space: pre; line-height: 22px; min-height: 22px;
+  color: #f0ece2; user-select: none;
+}
+.text-display-row.empty-line { color: #4a4a6a; min-height: 8px; line-height: 8px; }
+
+/* Spacer line for between/before/after text lines */
+.spacer-line { min-height: 4px; }
+
+/* ===== CHORD PICKER POPUP ===== */
+#chordPopup {
+  display: none; position: fixed; z-index: 200;
+  background: #222244; border: 1px solid #4a4a6a; border-radius: 10px;
+  padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  width: 280px;
+}
+#chordPopup.visible { display: block; }
+
+/* Recent/frequent chords */
+.recent-chords { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.recent-chords .quick-chord {
+  padding: 4px 10px; border-radius: 6px; color: #fff; font-size: 13px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  cursor: pointer; border: none; white-space: nowrap;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.recent-chords .quick-chord:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.recent-label { font-size: 10px; color: #7a7a9a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+#chordPopup input {
+  width: 100%; background: #1a1a2e; border: 1px solid #4a4a6a;
+  color: #f0ece2; padding: 10px; border-radius: 6px; font-size: 16px;
+  font-family: 'Courier Prime', monospace; font-weight: 700;
+}
+#chordPopup input:focus { outline: none; border-color: #e94560; }
+.autocomplete-list { max-height: 200px; overflow-y: auto; margin-top: 4px; }
+.autocomplete-item {
+  padding: 7px 10px; cursor: pointer; border-radius: 6px; font-size: 14px;
+  font-family: 'Courier Prime', monospace; font-weight: 700;
+  display: flex; align-items: center;
+}
+.autocomplete-item:hover, .autocomplete-item.selected { background: #0f3460; }
+.autocomplete-item .ac-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  color: #fff; font-size: 13px; font-weight: 700;
+  font-family: 'Courier Prime', monospace; margin-right: 8px;
+}
+#chordPopup .popup-actions { display: flex; gap: 6px; margin-top: 8px; }
+#chordPopup .popup-actions button {
+  flex: 1; padding: 8px; border: none; border-radius: 6px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.popup-btn-save { background: #e94560; color: #fff; }
+.popup-btn-del { background: #4a4a6a; color: #fff; }
+.popup-btn-cancel { background: none; color: #7a7a9a; border: 1px solid #4a4a6a !important; }
+
+/* ===== SECTION TYPE PICKER ===== */
+#sectionTypePicker {
+  display: none; position: fixed; z-index: 200;
+  background: #222244; border: 1px solid #4a4a6a; border-radius: 12px;
+  padding: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  left: 12px; right: 12px; max-width: 320px; margin: 0 auto; bottom: 80px;
+}
+#sectionTypePicker.visible { display: block; }
+#sectionTypePicker button {
+  display: block; width: 100%; text-align: left; padding: 12px;
+  background: none; border: none; color: #f0ece2; font-size: 15px;
+  cursor: pointer; border-radius: 8px;
+}
+#sectionTypePicker button:hover { background: #0f3460; }
+
+/* ===== MODALS ===== */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-box {
+  background: #222244; border-radius: 12px; padding: 24px; margin: 20px;
+  max-width: 460px; width: 100%;
+}
+.modal-box h3 { margin-bottom: 12px; font-size: 18px; }
+.modal-box p { color: #aaa; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+.modal-box .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.modal-box .modal-actions button {
+  flex: 1; padding: 10px; border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; min-width: 100px;
+}
+.btn-primary { background: #e94560; color: #fff; }
+.btn-secondary { background: #0f3460; color: #fff; }
+.btn-cancel { background: none; color: #7a7a9a; border: 1px solid #4a4a6a; }
+
+.import-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.import-option-btn {
+  display: flex; align-items: center; gap: 12px; padding: 14px;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 10px;
+  color: #f0ece2; cursor: pointer; text-align: left; font-size: 14px;
+}
+.import-option-btn:hover { border-color: #e94560; }
+.import-option-btn .opt-icon { font-size: 24px; width: 32px; text-align: center; flex-shrink: 0; }
+.import-option-btn .opt-text .opt-title { font-weight: 600; margin-bottom: 2px; }
+.import-option-btn .opt-text .opt-desc { font-size: 12px; color: #7a7a9a; }
+.import-option-btn input[type="file"] { display: none; }
+
+#pasteModal .modal-box textarea {
+  width: 100%; min-height: 200px; background: #1a1a2e; border: 1px solid #4a4a6a;
+  color: #f0ece2; padding: 12px; border-radius: 8px; font-size: 14px;
+  font-family: 'Courier Prime', monospace; resize: vertical; margin-bottom: 12px;
+}
+#pasteModal .modal-box textarea:focus { outline: none; border-color: #e94560; }
+
+/* ===== PRINT CHORD ROW (hidden on screen, shown in print) ===== */
+.print-chord-row {
+  display: none; position: relative; height: 24px;
+  font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700;
+  white-space: pre; user-select: none; overflow: visible;
+}
+.print-chord-row .print-badge {
+  position: absolute; bottom: 0;
+  padding: 1px 5px; border-radius: 4px; color: #fff; font-size: 12px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  white-space: nowrap; line-height: 18px;
+}
+
+/* ===== PRINT ===== */
+.print-header { display: none; }
+@media print {
+  body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+  #header, #bottomNav, .add-section-btn, .tab-bar, .song-meta-fields,
+  .sec-actions, .drag-handle, #chordPopup, #sectionTypePicker,
+  .modal-overlay, .list-toolbar, #darkModeToggle,
+  .dot-row { display: none !important; }
+  .view { display: none !important; }
+  #songView { display: block !important; padding: 20px !important; max-width: none !important; }
+  #textEditTab { display: none !important; }
+  #chordEditTab { display: block !important; }
+  .print-header { display: block !important; margin-bottom: 20px; }
+  .print-header h1 { font-size: 24px; margin-bottom: 4px; color: #000; }
+  .print-header .print-meta { font-size: 14px; color: #666; }
+  .chord-section-block {
+    background: #fff !important; border: none !important;
+    page-break-inside: avoid; margin-bottom: 10px;
+  }
+  /* Dezente Sektions-Labels im Druck */
+  .chord-section-header {
+    border-bottom: none !important; padding: 4px 0 2px 0 !important;
+  }
+  .section-badge {
+    background: none !important; color: #666 !important;
+    font-style: italic; font-size: 12px; padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .chord-section-body { padding: 0 4px !important; }
+  /* Show print chord badges, hide dots */
+  .print-chord-row {
+    display: block !important;
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
+  .print-badge {
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
+  .text-display-row { color: #000 !important; }
+  .text-display-row.empty-line { display: none !important; }
+  .spacer-line { display: none !important; }
+  /* Hide spacer blocks that have no chords */
+  .chord-line-block.spacer-block.no-chords { display: none !important; }
+  /* Spacer blocks WITH chords: show the print-chord-row, hide spacer-line */
+  .chord-line-block.spacer-block { margin-bottom: 0; }
+}
+
+/* ===== LIGHT MODE ===== */
+body.light-mode {
+  background: #f5f5f0; color: #1a1a2e;
+}
+body.light-mode #header {
+  background: #fff; border-bottom-color: #ddd;
+}
+body.light-mode #header .back-btn,
+body.light-mode #header .actions button,
+body.light-mode #header .title { color: #1a1a2e; }
+body.light-mode #bottomNav {
+  background: #fff; border-top-color: #ddd;
+}
+body.light-mode #bottomNav button { color: #999; }
+body.light-mode #bottomNav button.active { color: #e94560; }
+body.light-mode .song-card,
+body.light-mode .section-edit-block,
+body.light-mode .chord-section-block {
+  background: #fff; border-color: #ddd;
+}
+body.light-mode .song-card .info .song-meta { color: #999; }
+body.light-mode .song-card .card-actions button { color: #999; }
+body.light-mode .song-meta-fields input {
+  background: #fff; border-color: #ddd; color: #1a1a2e;
+}
+body.light-mode .tab-bar { border-color: #ddd; }
+body.light-mode .tab-bar button { background: #fff; color: #999; }
+body.light-mode .tab-bar button.active { background: #e94560; color: #fff; }
+body.light-mode .section-edit-header {
+  border-bottom-color: #ddd;
+}
+body.light-mode .section-edit-header select {
+  background: #f5f5f0; border-color: #ddd; color: #1a1a2e;
+}
+body.light-mode .section-label-input { color: #1a1a2e; }
+body.light-mode .section-textarea {
+  background: #f5f5f0; color: #1a1a2e;
+}
+body.light-mode .section-textarea::placeholder { color: #bbb; }
+body.light-mode .text-display-row { color: #1a1a2e; }
+body.light-mode .text-display-row.empty-line { color: #ccc; }
+body.light-mode .dot-cell .dot { background: #ccc; }
+body.light-mode .dot-cell:hover .dot { background: #e94560; }
+body.light-mode .chord-section-header { border-bottom-color: #ddd; }
+body.light-mode .empty-state { color: #999; }
+body.light-mode #chordPopup {
+  background: #fff; border-color: #ddd;
+}
+body.light-mode #chordPopup input {
+  background: #f5f5f0; border-color: #ddd; color: #1a1a2e;
+}
+body.light-mode .autocomplete-item:hover,
+body.light-mode .autocomplete-item.selected { background: #e8e8e8; }
+body.light-mode .recent-label { color: #999; }
+body.light-mode .popup-btn-cancel { color: #999; border-color: #ddd !important; }
+body.light-mode #sectionTypePicker {
+  background: #fff; border-color: #ddd;
+}
+body.light-mode #sectionTypePicker button { color: #1a1a2e; }
+body.light-mode #sectionTypePicker button:hover { background: #e8e8e8; }
+body.light-mode .modal-box {
+  background: #fff; border-color: #ddd;
+}
+body.light-mode .modal-box p { color: #666; }
+body.light-mode .modal-box h3 { color: #1a1a2e; }
+body.light-mode .import-option-btn {
+  background: #f5f5f0; border-color: #ddd; color: #1a1a2e;
+}
+body.light-mode .import-option-btn .opt-text .opt-desc { color: #999; }
+body.light-mode .btn-cancel { color: #999; border-color: #ddd; }
+body.light-mode #pasteModal .modal-box textarea {
+  background: #f5f5f0; border-color: #ddd; color: #1a1a2e;
+}
+body.light-mode .sec-actions button { color: #999; }
+body.light-mode .section-edit-header .drag-handle { color: #ccc; }
+
+/* ===== DRAG ===== */
+.section-edit-block.dragging { opacity: 0.4; }
+.section-edit-block.drag-over { border-top: 3px solid #e94560; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <button class="back-btn" id="backBtn" onclick="navigateBack()">&#8592;</button>
+  <span class="title" id="headerTitle">ChordSheet</span>
+  <div class="actions" id="headerActions"></div>
+  <button id="darkModeToggle" onclick="toggleDarkMode()" style="background:none;border:none;color:#f0ece2;font-size:20px;cursor:pointer;padding:8px" title="Dark/Light Mode">&#9790;</button>
+</div>
+
+<!-- VIEW: SONG LIST -->
+<div class="view active" id="listView">
+  <div class="list-toolbar">
+    <button class="toolbar-btn" onclick="createNewSong()">+ Neuer Song</button>
+    <button class="toolbar-btn secondary" onclick="showImportModal()">+ Import</button>
+    <button class="toolbar-btn secondary" onclick="exportAllSongs()">&#11015; Backup</button>
+  </div>
+  <div id="songListContainer"></div>
+</div>
+
+<!-- VIEW: SONG -->
+<div class="view" id="songView">
+  <div class="print-header" id="printHeader"></div>
+  <div class="song-meta-fields" id="songMetaFields"></div>
+  <div class="tab-bar" id="songTabBar">
+    <button class="active" onclick="switchTab('text')">&#9998; Text</button>
+    <button onclick="switchTab('chords')">&#9835; Akkorde</button>
+  </div>
+  <div id="textEditTab">
+    <div id="textSectionsContainer"></div>
+    <button class="add-section-btn" onclick="showSectionTypePicker()">+ Sektion hinzuf&uuml;gen</button>
+  </div>
+  <div id="chordEditTab" style="display:none">
+    <div id="chordSectionsContainer"></div>
+  </div>
+</div>
+
+<div id="bottomNav">
+  <button id="navList" class="active" onclick="showSongList()">
+    <span class="icon">&#9776;</span>Songs
+  </button>
+  <button id="navSong" onclick="showCurrentSong()" disabled>
+    <span class="icon">&#9835;</span>Song
+  </button>
+  <button id="navPrint" onclick="printSong()" disabled>
+    <span class="icon">&#128424;</span>Drucken
+  </button>
+</div>
+
+<!-- CHORD PICKER -->
+<div id="chordPopup">
+  <div id="recentChordsSection"></div>
+  <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off">
+  <div class="autocomplete-list" id="autocompleteList"></div>
+  <div class="popup-actions">
+    <button class="popup-btn-save" onclick="saveChord()">OK</button>
+    <button class="popup-btn-del" id="chordDeleteBtn" onclick="deleteChord()" style="display:none">&#10005;</button>
+    <button class="popup-btn-cancel" onclick="closeChordPopup()">Abbrechen</button>
+  </div>
+</div>
+
+<div id="sectionTypePicker"></div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box">
+    <h3>Song importieren</h3>
+    <div class="import-options">
+      <label class="import-option-btn">
+        <span class="opt-icon">&#128196;</span>
+        <span class="opt-text">
+          <div class="opt-title">Text aus .txt-Datei</div>
+          <div class="opt-desc">Liedtext importieren, Akkorde danach zuweisen</div>
+        </span>
+        <input type="file" accept=".txt" onchange="importTxtFile(event)">
+      </label>
+      <button class="import-option-btn" onclick="showPasteModal()">
+        <span class="opt-icon">&#128203;</span>
+        <span class="opt-text">
+          <div class="opt-title">Text einf&uuml;gen</div>
+          <div class="opt-desc">Liedtext aus Zwischenablage einf&uuml;gen</div>
+        </span>
+      </button>
+      <label class="import-option-btn">
+        <span class="opt-icon">&#127928;</span>
+        <span class="opt-text">
+          <div class="opt-title">ChordSheet-Datei (.chord.json)</div>
+          <div class="opt-desc">Zuvor gespeicherten Song mit Akkorden laden</div>
+        </span>
+        <input type="file" accept=".json" onchange="importChordJson(event)">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeImportModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASTE MODAL -->
+<div class="modal-overlay" id="pasteModal">
+  <div class="modal-box">
+    <h3>Text einf&uuml;gen</h3>
+    <p>F&uuml;ge den Liedtext ein. Trenne Sektionen durch eine Leerzeile.</p>
+    <textarea id="pasteTextarea" placeholder="Verse 1&#10;Hier steht der Text...&#10;&#10;Chorus&#10;Refrain Text hier..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="importPastedText()">Importieren</button>
+      <button class="btn-cancel" onclick="closePasteModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFLICT MODAL -->
+<div class="modal-overlay" id="conflictModal">
+  <div class="modal-box">
+    <h3>Song existiert bereits</h3>
+    <p id="conflictModalText"></p>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="resolveConflict('replace')">Ersetzen</button>
+      <button class="btn-secondary" onclick="resolveConflict('copy')">Als Kopie</button>
+      <button class="btn-cancel" onclick="resolveConflict('cancel')">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <h3>Song l&ouml;schen?</h3>
+    <p id="deleteModalText"></p>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="confirmDeleteSong()">L&ouml;schen</button>
+      <button class="btn-cancel" onclick="closeDeleteModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===============================================
+// DATA
+// ===============================================
+const STORAGE_KEY = 'chordsheet_songs';
+const HISTORY_KEY = 'chordsheet_chord_history';
+let songs = [];
+let currentSongId = null;
+let currentTab = 'text';
+let editingChord = null;
+let conflictResolve = null;
+let deleteSongId = null;
+let autocompleteIdx = -1;
+let dragSectionId = null;
+
+// ===== CHORD HISTORY (recent + frequency) =====
+let chordHistory = []; // array of { chord, count, lastUsed }
+
+function loadChordHistory() {
+  try { chordHistory = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { chordHistory = []; }
+}
+function saveChordHistory() { localStorage.setItem(HISTORY_KEY, JSON.stringify(chordHistory)); }
+
+function recordChordUsage(chord) {
+  const entry = chordHistory.find(h => h.chord === chord);
+  if (entry) {
+    entry.count++;
+    entry.lastUsed = Date.now();
+  } else {
+    chordHistory.push({ chord, count: 1, lastUsed: Date.now() });
+  }
+  saveChordHistory();
+}
+
+function getRecentChords(limit) {
+  // Sort by lastUsed descending, return top N unique
+  return [...chordHistory]
+    .sort((a, b) => b.lastUsed - a.lastUsed)
+    .slice(0, limit)
+    .map(h => h.chord);
+}
+
+function getFrequentChords(limit) {
+  // Sort by count descending, return top N
+  return [...chordHistory]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map(h => h.chord);
+}
+
+// Also gather chords used in current song
+function getCurrentSongChords() {
+  const song = getSong(currentSongId);
+  if (!song) return [];
+  const used = {};
+  song.sections.forEach(sec => sec.lines.forEach(ln => ln.chords.forEach(ch => {
+    used[ch.chord] = (used[ch.chord] || 0) + 1;
+  })));
+  return Object.entries(used).sort((a,b) => b[1] - a[1]).map(e => e[0]);
+}
+
+// ===== CHORD COLORS =====
+const chordColors = {
+  'C':'#c0392b','D':'#d35400','E':'#b7950b','F':'#27ae60',
+  'G':'#16a085','A':'#2980b9','B':'#8e44ad','H':'#8e44ad'
+};
+function getChordColor(chord) {
+  if (!chord) return '#4a4a6a';
+  const root = chord.charAt(0).toUpperCase();
+  return chordColors[root] || '#4a4a6a';
+}
+
+// ===== CHORD LIST (ordered: major, minor, 7ths, extensions, etc.) =====
+const chordRoots = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B','H'];
+// Ordered: major first, then minor, then 7th variants, then extensions
+const chordMods = [
+  '',         // Major
+  'm',        // Minor
+  '7',        // Dominant 7
+  'maj7',     // Major 7
+  'm7',       // Minor 7
+  'sus2',     // Suspended 2
+  'sus4',     // Suspended 4
+  'add9',     // Add 9
+  '6',        // Major 6
+  'm6',       // Minor 6
+  '9',        // Dominant 9
+  'm9',       // Minor 9
+  'dim',      // Diminished
+  'dim7',     // Diminished 7
+  'aug',      // Augmented
+  '11',       // 11th
+  '13',       // 13th
+  '7sus4',    // 7 sus4
+  'mmaj7',    // Minor-major 7
+];
+
+const allChords = [];
+chordRoots.forEach(r => chordMods.forEach(m => allChords.push(r + m)));
+// Slash chords
+chordRoots.forEach(r => {
+  ['C','D','E','F','G','A','B'].forEach(b => { if (b !== r.charAt(0)) allChords.push(r+'/'+b); });
+});
+
+function filterChords(q) {
+  if (!q) return allChords.slice(0, 20); // show initial list when empty
+  const ql = q.toLowerCase();
+  const exact = [], starts = [], contains = [];
+  for (const c of allChords) {
+    const cl = c.toLowerCase();
+    if (cl === ql) exact.push(c);
+    else if (cl.startsWith(ql)) starts.push(c);
+    else if (cl.includes(ql)) contains.push(c);
+  }
+  return [...exact, ...starts, ...contains].slice(0, 20);
+}
+
+// ===== SECTION TYPES =====
+const SECTION_TYPES = ['Intro','Verse','Pre-Chorus','Chorus','Bridge','Solo','Interlude','Outro'];
+const SECTION_TYPE_REGEX = /^(intro|verse|pre-?chorus|chorus|bridge|solo|interlude|outro)(\s*\d*)/i;
+
+function detectSectionType(label) {
+  const m = label.match(SECTION_TYPE_REGEX);
+  if (!m) return null;
+  const name = m[1].toLowerCase().replace('prechorus','pre-chorus');
+  return SECTION_TYPES.find(t => t.toLowerCase() === name) || 'Verse';
+}
+
+// ===== UTILS =====
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===============================================
+// PERSISTENCE
+// ===============================================
+function loadSongs() {
+  try { songs = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { songs = []; }
+}
+function saveSongs() { localStorage.setItem(STORAGE_KEY, JSON.stringify(songs)); }
+function getSong(id) { return songs.find(s => s.id === id); }
+
+// ===============================================
+// NAVIGATION
+// ===============================================
+function showSongList() {
+  setView('listView');
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('headerTitle').textContent = 'ChordSheet';
+  document.getElementById('headerActions').innerHTML = '';
+  setActiveNav('navList');
+  renderSongList();
+}
+
+function showSong(id) {
+  currentSongId = id;
+  const song = getSong(id);
+  if (!song) return;
+  setView('songView');
+  document.getElementById('backBtn').style.display = 'block';
+  document.getElementById('headerTitle').textContent = song.title;
+  document.getElementById('headerActions').innerHTML =
+    '<button onclick="exportSong(\''+id+'\')" title="Exportieren">&#11015;</button>' +
+    '<button onclick="duplicateSong(\''+id+'\')" title="Duplizieren">&#10697;</button>';
+  document.getElementById('navSong').disabled = false;
+  document.getElementById('navPrint').disabled = false;
+  setActiveNav('navSong');
+  renderSongMeta();
+  switchTab(currentTab);
+}
+
+function showCurrentSong() {
+  if (currentSongId && getSong(currentSongId)) showSong(currentSongId);
+  else if (songs.length) showSong(songs[0].id);
+}
+
+function navigateBack() { showSongList(); }
+
+function setView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function setActiveNav(id) {
+  document.querySelectorAll('#bottomNav button').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  const btns = document.querySelectorAll('#songTabBar button');
+  btns[0].classList.toggle('active', tab === 'text');
+  btns[1].classList.toggle('active', tab === 'chords');
+  document.getElementById('textEditTab').style.display = tab === 'text' ? 'block' : 'none';
+  document.getElementById('chordEditTab').style.display = tab === 'chords' ? 'block' : 'none';
+  if (tab === 'text') renderTextTab();
+  else renderChordTab();
+}
+
+function printSong() {
+  if (!currentSongId) showCurrentSong();
+  const song = getSong(currentSongId);
+  if (!song) return;
+  // Always render chord view (which now includes .print-chord-row)
+  renderChordTab();
+  const ph = document.getElementById('printHeader');
+  let meta = [];
+  if (song.key) meta.push('Tonart: ' + song.key);
+  if (song.bpm) meta.push(song.bpm + ' BPM');
+  ph.innerHTML = '<h1>' + esc(song.title) + '</h1>' +
+    (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '');
+  setView('songView');
+  document.getElementById('textEditTab').style.display = 'none';
+  document.getElementById('chordEditTab').style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    switchTab(currentTab);
+  }, 150);
+}
+
+// Build a print-only chord row with positioned badges (no dots)
+function renderPrintChordRow(chords) {
+  if (!chords || !chords.length) return '<div class="print-chord-row"></div>';
+  const sorted = [...chords].sort((a, b) => a.charIndex - b.charIndex);
+  const badges = sorted.map(ch => {
+    const left = ch.charIndex * 9.6;
+    return '<span class="print-badge" style="left:'+left+'px;background:'+getChordColor(ch.chord)+'">'+esc(ch.chord)+'</span>';
+  }).join('');
+  return '<div class="print-chord-row">' + badges + '</div>';
+}
+
+// ===== Dark Mode =====
+function toggleDarkMode() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('chordsheet_darkmode', isLight ? 'light' : 'dark');
+  updateDarkModeIcon();
+}
+
+function updateDarkModeIcon() {
+  const btn = document.getElementById('darkModeToggle');
+  const isLight = document.body.classList.contains('light-mode');
+  btn.innerHTML = isLight ? '&#9728;' : '&#9790;';
+  btn.style.color = isLight ? '#1a1a2e' : '#f0ece2';
+}
+
+function initDarkMode() {
+  const pref = localStorage.getItem('chordsheet_darkmode');
+  if (pref === 'light') {
+    document.body.classList.add('light-mode');
+  }
+  updateDarkModeIcon();
+}
+
+// ===============================================
+// SONG LIST
+// ===============================================
+function renderSongList() {
+  const c = document.getElementById('songListContainer');
+  if (!songs.length) {
+    c.innerHTML = '<div class="empty-state"><div class="big">&#9835;</div>Noch keine Songs.<br>Erstelle einen neuen oder importiere Text.</div>';
+    return;
+  }
+  c.innerHTML = songs.map(s => {
+    let meta = [];
+    if (s.key) meta.push(s.key);
+    if (s.bpm) meta.push(s.bpm+' BPM');
+    meta.push(new Date(s.createdAt).toLocaleDateString('de'));
+    return '<div class="song-card" onclick="showSong(\''+s.id+'\')">' +
+      '<div class="info"><div class="song-title">'+esc(s.title)+'</div>' +
+      '<div class="song-meta">'+esc(meta.join(' \u00b7 '))+'</div></div>' +
+      '<div class="card-actions">' +
+      '<button onclick="event.stopPropagation();exportSong(\''+s.id+'\')" title="Export">&#11015;</button>' +
+      '<button onclick="event.stopPropagation();askDeleteSong(\''+s.id+'\')" title="L\u00f6schen">&#10005;</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+// ===============================================
+// SONG CRUD
+// ===============================================
+function createNewSong() {
+  const song = { id: uid(), title: 'Neuer Song', key: '', bpm: null,
+    createdAt: new Date().toISOString(), sections: [] };
+  songs.unshift(song);
+  saveSongs();
+  showSong(song.id);
+}
+
+function duplicateSong(id) {
+  const orig = getSong(id);
+  if (!orig) return;
+  const copy = JSON.parse(JSON.stringify(orig));
+  copy.id = uid();
+  copy.title += ' (Kopie)';
+  copy.createdAt = new Date().toISOString();
+  copy.sections.forEach(sec => { sec.id = uid(); sec.lines.forEach(ln => { ln.id = uid(); ln.chords.forEach(ch => ch.id = uid()); }); });
+  songs.unshift(copy);
+  saveSongs();
+  showSong(copy.id);
+}
+
+function askDeleteSong(id) {
+  deleteSongId = id;
+  const s = getSong(id);
+  document.getElementById('deleteModalText').textContent = '\u201e'+(s?s.title:'')+'\u201c wirklich l\u00f6schen?';
+  document.getElementById('deleteModal').classList.add('visible');
+}
+function confirmDeleteSong() {
+  songs = songs.filter(s => s.id !== deleteSongId);
+  if (currentSongId === deleteSongId) { currentSongId = null; document.getElementById('navSong').disabled = true; document.getElementById('navPrint').disabled = true; }
+  saveSongs(); closeDeleteModal(); showSongList();
+}
+function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('visible'); deleteSongId = null; }
+
+// ===============================================
+// SONG META
+// ===============================================
+function renderSongMeta() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  document.getElementById('songMetaFields').innerHTML =
+    '<input class="f-title" value="'+esc(song.title)+'" placeholder="Songtitel" onchange="updateField(\'title\',this.value)" onfocus="this.select()">' +
+    '<input class="f-key" value="'+esc(song.key||'')+'" placeholder="Key" onchange="updateField(\'key\',this.value)">' +
+    '<input class="f-bpm" type="number" value="'+(song.bpm||'')+'" placeholder="BPM" onchange="updateField(\'bpm\',this.value?parseInt(this.value):null)">';
+}
+function updateField(f, v) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  song[f] = v;
+  if (f === 'title') document.getElementById('headerTitle').textContent = v;
+  saveSongs();
+}
+
+// ===============================================
+// TEXT TAB
+// ===============================================
+function renderTextTab() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const c = document.getElementById('textSectionsContainer');
+  c.innerHTML = song.sections.map(sec => {
+    const text = sec.lines.map(l => l.text).join('\n');
+    return '<div class="section-edit-block" data-section-id="'+sec.id+'" draggable="true" ' +
+      'ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ' +
+      'ondrop="onDrop(event)" ondragend="onDragEnd(event)">' +
+      '<div class="section-edit-header">' +
+      '<span class="drag-handle">&#10303;</span>' +
+      '<span class="section-badge '+sec.type+'">'+esc(sec.type)+'</span>' +
+      '<input class="section-label-input" value="'+esc(sec.label||'')+'" placeholder="Label..." ' +
+        'onchange="updateSectionLabel(\''+sec.id+'\',this.value)">' +
+      '<select onchange="updateSectionType(\''+sec.id+'\',this.value)">' +
+      SECTION_TYPES.map(t => '<option'+(t===sec.type?' selected':'')+'>'+t+'</option>').join('') +
+      '</select>' +
+      '<span class="sec-actions">' +
+      '<button onclick="deleteSection(\''+sec.id+'\')" title="L\u00f6schen">&#10005;</button>' +
+      '</span></div>' +
+      '<div class="section-edit-body">' +
+      '<textarea class="section-textarea" placeholder="Liedtext eingeben..." ' +
+        'oninput="onTextareaInput(\''+sec.id+'\',this)" ' +
+        'onblur="onTextareaBlur(\''+sec.id+'\',this)">'+esc(text)+'</textarea>' +
+      '</div></div>';
+  }).join('');
+}
+
+function onTextareaInput(secId, el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function onTextareaBlur(secId, el) {
+  syncTextToSection(secId, el.value);
+}
+
+function syncTextToSection(secId, rawText) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const sec = song.sections.find(s => s.id === secId);
+  if (!sec) return;
+  const newLines = rawText.split('\n');
+  const oldLines = sec.lines;
+  const merged = [];
+  for (let i = 0; i < newLines.length; i++) {
+    if (i < oldLines.length) {
+      const old = oldLines[i];
+      const chords = old.chords.filter(ch => ch.charIndex <= newLines[i].length);
+      merged.push({ id: old.id, text: newLines[i], chords });
+    } else {
+      merged.push({ id: uid(), text: newLines[i], chords: [] });
+    }
+  }
+  sec.lines = merged;
+  saveSongs();
+}
+
+// ===== Section Management =====
+function showSectionTypePicker() {
+  const picker = document.getElementById('sectionTypePicker');
+  picker.innerHTML = SECTION_TYPES.map(t =>
+    '<button onclick="addSection(\''+t+'\')"><span class="section-badge '+t+'" style="margin-right:8px">'+t+'</span> '+t+'</button>'
+  ).join('');
+  picker.classList.add('visible');
+}
+function hideSectionTypePicker() { document.getElementById('sectionTypePicker').classList.remove('visible'); }
+
+function addSection(type) {
+  hideSectionTypePicker();
+  const song = getSong(currentSongId);
+  if (!song) return;
+  song.sections.push({ id: uid(), type, label: type, lines: [{ id: uid(), text: '', chords: [] }] });
+  saveSongs();
+  renderTextTab();
+  const textareas = document.querySelectorAll('.section-textarea');
+  if (textareas.length) textareas[textareas.length-1].focus();
+}
+
+function deleteSection(secId) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  song.sections = song.sections.filter(s => s.id !== secId);
+  saveSongs();
+  if (currentTab === 'text') renderTextTab(); else renderChordTab();
+}
+
+function updateSectionType(secId, type) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const sec = song.sections.find(s => s.id === secId);
+  if (sec) { sec.type = type; saveSongs(); renderTextTab(); }
+}
+
+function updateSectionLabel(secId, label) {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const sec = song.sections.find(s => s.id === secId);
+  if (sec) { sec.label = label; saveSongs(); }
+}
+
+// ===== Drag & Drop =====
+function onDragStart(e) {
+  const block = e.target.closest('.section-edit-block');
+  if (!block) return;
+  dragSectionId = block.dataset.sectionId;
+  block.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  const block = e.target.closest('.section-edit-block');
+  if (block && block.dataset.sectionId !== dragSectionId) block.classList.add('drag-over');
+}
+function onDragLeave(e) {
+  const block = e.target.closest('.section-edit-block');
+  if (block) block.classList.remove('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault();
+  const block = e.target.closest('.section-edit-block');
+  if (!block || !dragSectionId) return;
+  block.classList.remove('drag-over');
+  const targetId = block.dataset.sectionId;
+  if (targetId === dragSectionId) return;
+  const song = getSong(currentSongId);
+  const from = song.sections.findIndex(s => s.id === dragSectionId);
+  const to = song.sections.findIndex(s => s.id === targetId);
+  if (from < 0 || to < 0) return;
+  const [moved] = song.sections.splice(from, 1);
+  song.sections.splice(to, 0, moved);
+  saveSongs(); renderTextTab();
+}
+function onDragEnd() {
+  dragSectionId = null;
+  document.querySelectorAll('.section-edit-block').forEach(b => b.classList.remove('dragging','drag-over'));
+}
+
+// ===============================================
+// CHORD TAB: Spacer lines + Dots
+// ===============================================
+const SPACER_COLS = 40; // number of dot positions on spacer lines
+
+function renderChordTab() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const c = document.getElementById('chordSectionsContainer');
+  if (!song.sections.length) {
+    c.innerHTML = '<div class="empty-state" style="margin-top:30px">Wechsle zum <b>Text</b>-Tab, um zuerst den Liedtext einzugeben.</div>';
+    return;
+  }
+  c.innerHTML = song.sections.map(sec => {
+    const body = buildChordLinesWithSpacers(sec);
+    return '<div class="chord-section-block">' +
+      '<div class="chord-section-header">' +
+      '<span class="section-badge '+sec.type+'">'+esc(sec.label || sec.type)+'</span>' +
+      '</div>' +
+      '<div class="chord-section-body">' + body + '</div></div>';
+  }).join('');
+}
+
+function buildChordLinesWithSpacers(sec) {
+  let html = '';
+  // Spacer before first line
+  html += renderSpacerLine(sec.id, '__pre0');
+  for (let i = 0; i < sec.lines.length; i++) {
+    const ln = sec.lines[i];
+    // Text line with dots
+    html += renderChordLineWithDots(sec.id, ln);
+    // Spacer after each line
+    html += renderSpacerLine(sec.id, '__post' + i);
+  }
+  return html;
+}
+
+function renderSpacerLine(secId, spacerId) {
+  // A spacer is a virtual empty line for placing chords between text lines
+  // It uses a special lineId convention: secId + spacerId
+  const lineId = 'spacer_' + secId + spacerId;
+
+  // Check if there are chords on this spacer
+  const song = getSong(currentSongId);
+  const sec = song.sections.find(s => s.id === secId);
+  // Spacer chords stored in a special _spacerChords map on the section
+  if (!sec._spacerChords) sec._spacerChords = {};
+  const spacerChords = sec._spacerChords[spacerId] || [];
+
+  const chordMap = {};
+  spacerChords.forEach(ch => { chordMap[ch.charIndex] = ch; });
+
+  let dotCells = '';
+  for (let i = 0; i < SPACER_COLS; i++) {
+    const ch = chordMap[i];
+    if (ch) {
+      dotCells += '<div class="dot-cell has-chord" onclick="editSpacerChord(event,\''+secId+'\',\''+escAttr(spacerId)+'\',\''+ch.id+'\')">' +
+        '<span class="placed-chord" style="background:'+getChordColor(ch.chord)+'">'+esc(ch.chord)+'</span></div>';
+    } else {
+      dotCells += '<div class="dot-cell" onclick="addSpacerChord(event,\''+secId+'\',\''+escAttr(spacerId)+'\','+i+')">' +
+        '<span class="dot"></span></div>';
+    }
+  }
+
+  const hasChords = spacerChords.length > 0;
+  const printRow = renderPrintChordRow(spacerChords);
+  return '<div class="chord-line-block spacer-block' + (hasChords ? '' : ' no-chords') + '">' +
+    '<div class="dot-row spacer-row">' + dotCells + '</div>' +
+    printRow +
+    '<div class="spacer-line"></div></div>';
+}
+
+function renderChordLineWithDots(secId, ln) {
+  const dotRowHTML = renderDotRow(secId, ln);
+  const printRow = renderPrintChordRow(ln.chords);
+  const text = ln.text || '';
+  const textHTML = text ? esc(text) : '&nbsp;';
+  return '<div class="chord-line-block">' +
+    dotRowHTML + printRow +
+    '<div class="text-display-row'+(text.trim()?'':' empty-line')+'">' + textHTML + '</div></div>';
+}
+
+function renderDotRow(secId, ln) {
+  const text = ln.text || ' ';
+  const len = Math.max(text.length, 1);
+  const chordMap = {};
+  ln.chords.forEach(ch => { chordMap[ch.charIndex] = ch; });
+
+  let dotCells = '';
+  for (let i = 0; i < len; i++) {
+    const ch = chordMap[i];
+    if (ch) {
+      dotCells += '<div class="dot-cell has-chord" onclick="editExistingChord(event,\''+secId+'\',\''+ln.id+'\',\''+ch.id+'\')">' +
+        '<span class="placed-chord" style="background:'+getChordColor(ch.chord)+'">'+esc(ch.chord)+'</span></div>';
+    } else {
+      dotCells += '<div class="dot-cell" onclick="addChordAt(event,\''+secId+'\',\''+ln.id+'\','+i+')">' +
+        '<span class="dot"></span></div>';
+    }
+  }
+  return '<div class="dot-row">' + dotCells + '</div>';
+}
+
+function escAttr(s) { return esc(s); }
+
+// ===============================================
+// CHORD POPUP
+// ===============================================
+function addChordAt(event, secId, lineId, charIndex) {
+  event.stopPropagation();
+  editingChord = { secId, lineId, chordId: null, charIndex, isSpacer: false };
+  openChordPopup('', event.clientX, event.clientY, false);
+}
+
+function editExistingChord(event, secId, lineId, chordId) {
+  event.stopPropagation();
+  const song = getSong(currentSongId);
+  const sec = song.sections.find(s => s.id === secId);
+  const ln = sec.lines.find(l => l.id === lineId);
+  const ch = ln.chords.find(c => c.id === chordId);
+  editingChord = { secId, lineId, chordId, charIndex: ch.charIndex, isSpacer: false };
+  openChordPopup(ch.chord, event.clientX, event.clientY, true);
+}
+
+function addSpacerChord(event, secId, spacerId, charIndex) {
+  event.stopPropagation();
+  editingChord = { secId, spacerId, chordId: null, charIndex, isSpacer: true };
+  openChordPopup('', event.clientX, event.clientY, false);
+}
+
+function editSpacerChord(event, secId, spacerId, chordId) {
+  event.stopPropagation();
+  const song = getSong(currentSongId);
+  const sec = song.sections.find(s => s.id === secId);
+  if (!sec._spacerChords) sec._spacerChords = {};
+  const chords = sec._spacerChords[spacerId] || [];
+  const ch = chords.find(c => c.id === chordId);
+  editingChord = { secId, spacerId, chordId, charIndex: ch ? ch.charIndex : 0, isSpacer: true };
+  openChordPopup(ch ? ch.chord : '', event.clientX, event.clientY, true);
+}
+
+function openChordPopup(value, x, y, showDelete) {
+  const popup = document.getElementById('chordPopup');
+  const input = document.getElementById('chordInput');
+  input.value = value;
+  document.getElementById('chordDeleteBtn').style.display = showDelete ? 'block' : 'none';
+  autocompleteIdx = -1;
+
+  // Render recent/frequent chords
+  renderQuickChords();
+
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let left = Math.min(x - 140, vw - 290);
+  let top = y - 160;
+  if (top < 60) top = y + 10;
+  if (top + 350 > vh) top = vh - 360;
+  popup.style.left = Math.max(8, left) + 'px';
+  popup.style.top = Math.max(60, top) + 'px';
+  popup.classList.add('visible');
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+  updateAutocomplete();
+}
+
+function renderQuickChords() {
+  const section = document.getElementById('recentChordsSection');
+  const songChords = getCurrentSongChords();
+  const recent = getRecentChords(12);
+  // Merge: song chords first, then recent, deduplicated
+  const seen = new Set();
+  const quickList = [];
+  for (const c of songChords) {
+    if (!seen.has(c)) { seen.add(c); quickList.push(c); }
+  }
+  for (const c of recent) {
+    if (!seen.has(c)) { seen.add(c); quickList.push(c); }
+  }
+  const display = quickList.slice(0, 14);
+
+  if (!display.length) {
+    section.innerHTML = '';
+    return;
+  }
+
+  section.innerHTML =
+    '<div class="recent-label">Zuletzt / h&auml;ufig verwendet</div>' +
+    '<div class="recent-chords">' +
+    display.map(c =>
+      '<button class="quick-chord" style="background:'+getChordColor(c)+'" onclick="quickSelectChord(\''+esc(c)+'\')">'+esc(c)+'</button>'
+    ).join('') + '</div>';
+}
+
+function quickSelectChord(chord) {
+  document.getElementById('chordInput').value = chord;
+  saveChord();
+}
+
+function saveChord() {
+  if (!editingChord) return;
+  const val = document.getElementById('chordInput').value.trim();
+  if (!val) { closeChordPopup(); return; }
+
+  const song = getSong(currentSongId);
+  const sec = song.sections.find(s => s.id === editingChord.secId);
+
+  if (editingChord.isSpacer) {
+    // Spacer chord
+    if (!sec._spacerChords) sec._spacerChords = {};
+    if (!sec._spacerChords[editingChord.spacerId]) sec._spacerChords[editingChord.spacerId] = [];
+    const arr = sec._spacerChords[editingChord.spacerId];
+    if (editingChord.chordId) {
+      const ch = arr.find(c => c.id === editingChord.chordId);
+      if (ch) ch.chord = val;
+    } else {
+      arr.push({ id: uid(), chord: val, charIndex: editingChord.charIndex });
+    }
+  } else {
+    // Normal line chord
+    const ln = sec.lines.find(l => l.id === editingChord.lineId);
+    if (editingChord.chordId) {
+      const ch = ln.chords.find(c => c.id === editingChord.chordId);
+      if (ch) ch.chord = val;
+    } else {
+      ln.chords.push({ id: uid(), chord: val, charIndex: editingChord.charIndex });
+    }
+  }
+
+  recordChordUsage(val);
+  saveSongs();
+  closeChordPopup();
+  renderChordTab();
+}
+
+function deleteChord() {
+  if (!editingChord) return;
+  const song = getSong(currentSongId);
+  const sec = song.sections.find(s => s.id === editingChord.secId);
+
+  if (editingChord.isSpacer) {
+    if (sec._spacerChords && sec._spacerChords[editingChord.spacerId]) {
+      sec._spacerChords[editingChord.spacerId] = sec._spacerChords[editingChord.spacerId].filter(c => c.id !== editingChord.chordId);
+    }
+  } else {
+    const ln = sec.lines.find(l => l.id === editingChord.lineId);
+    ln.chords = ln.chords.filter(c => c.id !== editingChord.chordId);
+  }
+  saveSongs();
+  closeChordPopup();
+  renderChordTab();
+}
+
+function closeChordPopup() {
+  editingChord = null;
+  document.getElementById('chordPopup').classList.remove('visible');
+}
+
+function updateAutocomplete() {
+  const input = document.getElementById('chordInput');
+  const list = document.getElementById('autocompleteList');
+  const results = filterChords(input.value.trim());
+  autocompleteIdx = -1;
+  if (!results.length) { list.innerHTML = ''; return; }
+  list.innerHTML = results.map(c =>
+    '<div class="autocomplete-item" onclick="selectAutocomplete(\''+esc(c)+'\')">' +
+    '<span class="ac-badge" style="background:'+getChordColor(c)+'">'+esc(c)+'</span>' +
+    '</div>'
+  ).join('');
+}
+
+function selectAutocomplete(chord) {
+  document.getElementById('chordInput').value = chord;
+  document.getElementById('autocompleteList').innerHTML = '';
+  saveChord();
+}
+
+// ===============================================
+// EXPORT
+// ===============================================
+function exportSong(id) {
+  const song = getSong(id);
+  if (!song) return;
+  const d = new Date(song.createdAt).toISOString().slice(0,10);
+  const name = song.title.replace(/[^a-zA-Z0-9\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df -]/g,'').replace(/\s+/g,'-');
+  downloadJSON(song, name+'-'+d+'.chord.json');
+}
+
+function exportAllSongs() {
+  if (!songs.length) return;
+  downloadJSON({ type:'songbook-export', songs, exportedAt: new Date().toISOString() }, 'songbook-export.json');
+}
+
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ===============================================
+// IMPORT
+// ===============================================
+function showImportModal() { document.getElementById('importModal').classList.add('visible'); }
+function closeImportModal() { document.getElementById('importModal').classList.remove('visible'); }
+function showPasteModal() {
+  closeImportModal();
+  document.getElementById('pasteModal').classList.add('visible');
+  document.getElementById('pasteTextarea').value = '';
+  setTimeout(() => document.getElementById('pasteTextarea').focus(), 100);
+}
+function closePasteModal() { document.getElementById('pasteModal').classList.remove('visible'); }
+
+function importTxtFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    createSongFromText(file.name.replace(/\.txt$/i,''), e.target.result);
+    closeImportModal();
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function importPastedText() {
+  const text = document.getElementById('pasteTextarea').value.trim();
+  if (!text) return;
+  closePasteModal();
+  createSongFromText('Importierter Song', text);
+}
+
+function createSongFromText(title, rawText) {
+  const blocks = rawText.split(/\n\s*\n/).filter(b => b.trim());
+  const sections = [];
+  for (const block of blocks) {
+    const lines = block.split('\n');
+    let type = 'Verse', label = type, textLines = lines;
+    if (lines.length > 1) {
+      const detected = detectSectionType(lines[0].trim());
+      if (detected) { type = detected; label = lines[0].trim(); textLines = lines.slice(1); }
+    }
+    sections.push({ id: uid(), type, label, lines: textLines.map(t => ({ id: uid(), text: t, chords: [] })) });
+  }
+  if (!sections.length) sections.push({ id: uid(), type:'Verse', label:'Verse', lines:[{id:uid(),text:'',chords:[]}] });
+  const song = { id: uid(), title, key: '', bpm: null, createdAt: new Date().toISOString(), sections };
+  songs.unshift(song);
+  saveSongs();
+  showSong(song.id);
+}
+
+function importChordJson(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.type === 'songbook-export' && Array.isArray(data.songs)) {
+        for (const s of data.songs) await importSingleSong(s);
+      } else if (data.id && data.title && data.sections) {
+        await importSingleSong(data);
+      } else { alert('Ung\u00fcltiges Dateiformat.'); }
+    } catch (err) { alert('Fehler: ' + err.message); }
+    saveSongs(); closeImportModal(); showSongList();
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function importSingleSong(songData) {
+  return new Promise(resolve => {
+    const existing = songs.find(s => s.id === songData.id);
+    if (existing) {
+      document.getElementById('conflictModalText').textContent = '\u201e'+songData.title+'\u201c existiert bereits.';
+      document.getElementById('conflictModal').classList.add('visible');
+      conflictResolve = (action) => {
+        if (action === 'replace') Object.assign(existing, songData);
+        else if (action === 'copy') {
+          const copy = JSON.parse(JSON.stringify(songData));
+          copy.id = uid(); copy.title += ' (Import)';
+          songs.unshift(copy);
+        }
+        resolve();
+      };
+    } else {
+      songs.unshift(JSON.parse(JSON.stringify(songData)));
+      resolve();
+    }
+  });
+}
+
+function resolveConflict(action) {
+  document.getElementById('conflictModal').classList.remove('visible');
+  if (conflictResolve) { conflictResolve(action); conflictResolve = null; }
+}
+
+// ===============================================
+// EVENT LISTENERS
+// ===============================================
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('chordInput');
+  input.addEventListener('input', updateAutocomplete);
+  input.addEventListener('keydown', (e) => {
+    const items = document.querySelectorAll('#autocompleteList .autocomplete-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      autocompleteIdx = Math.min(autocompleteIdx+1, items.length-1);
+      items.forEach((it,i) => it.classList.toggle('selected', i===autocompleteIdx));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      autocompleteIdx = Math.max(autocompleteIdx-1, 0);
+      items.forEach((it,i) => it.classList.toggle('selected', i===autocompleteIdx));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (autocompleteIdx >= 0 && items[autocompleteIdx]) items[autocompleteIdx].click();
+      else saveChord();
+    } else if (e.key === 'Escape') {
+      closeChordPopup();
+    }
+  });
+});
+
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('chordPopup');
+  if (popup.classList.contains('visible') && !popup.contains(e.target) &&
+      !e.target.closest('.dot-cell') && !e.target.closest('.placed-chord')) {
+    closeChordPopup();
+  }
+  const picker = document.getElementById('sectionTypePicker');
+  if (picker.classList.contains('visible') && !picker.contains(e.target) && !e.target.closest('.add-section-btn')) {
+    hideSectionTypePicker();
+  }
+});
+
+// Auto-grow textareas
+const observer = new MutationObserver(() => {
+  document.querySelectorAll('.section-textarea').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+});
+observer.observe(document.getElementById('textSectionsContainer'), { childList: true });
+
+// ===============================================
+// INIT
+// ===============================================
+loadSongs();
+loadChordHistory();
+initDarkMode();
+renderSongList();
+</script>
+</body>
+</html>
