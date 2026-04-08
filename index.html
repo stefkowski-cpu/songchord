@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ChordSheet – Chord & Lyrics Editor</title>
+<title>songchord mega</title>
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -308,9 +310,10 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
   display: none; position: fixed; z-index: 200;
   background: #222244; border: 1px solid #4a4a6a; border-radius: 10px;
   padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  width: 280px;
+  width: 280px; flex-direction: column;
 }
-#chordPopup.visible { display: block; }
+#chordPopup.visible { display: flex; }
+#chordPopup.edit-mode #chordDiagram { order: -1; }
 
 /* Quick-pick rows */
 .quick-pick-section { margin-bottom: 8px; }
@@ -368,6 +371,8 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
   color: #fff; font-size: 13px; font-weight: 700;
   font-family: 'Courier Prime', monospace; margin-right: 8px;
 }
+#chordDiagram { display: flex; justify-content: center; margin: 8px 0; }
+#chordDiagram:empty { display: none; }
 #chordPopup .popup-actions { display: flex; gap: 6px; margin-top: 8px; }
 #chordPopup .popup-actions button {
   flex: 1; padding: 8px; border: none; border-radius: 6px;
@@ -625,7 +630,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
 
 <div id="header">
   <button class="back-btn" id="backBtn" onclick="navigateBack()">&#8592;</button>
-  <span class="title" id="headerTitle" onclick="startEditTitle()">ChordSheet</span>
+  <span class="title" id="headerTitle" onclick="startEditTitle()">songchord mega</span>
   <div class="actions" id="headerActions"></div>
   <button id="darkModeToggle" onclick="toggleDarkMode()" style="background:none;border:none;color:#f0ece2;font-size:20px;cursor:pointer;padding:8px" title="Dark/Light Mode">&#9790;</button>
 </div>
@@ -679,6 +684,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
   <div id="recentChordsSection"></div>
   <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off">
   <div class="autocomplete-list" id="autocompleteList"></div>
+  <div id="chordDiagram"></div>
   <div class="popup-actions">
     <button class="popup-btn-save" onclick="saveChord()">OK</button>
     <button class="popup-btn-del" id="chordDeleteBtn" onclick="deleteChord()" style="display:none">&#10005;</button>
@@ -711,7 +717,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
       <label class="import-option-btn">
         <span class="opt-icon">&#127928;</span>
         <span class="opt-text">
-          <div class="opt-title">ChordSheet-Datei (.chord.json)</div>
+          <div class="opt-title">songchord mega-Datei (.chord.json)</div>
           <div class="opt-desc">Zuvor gespeicherten Song mit Akkorden laden</div>
         </span>
         <input type="file" accept=".json" onchange="importChordJson(event)">
@@ -992,7 +998,7 @@ function getSong(id) { return songs.find(s => s.id === id); }
 function showSongList() {
   setView('listView');
   document.getElementById('backBtn').style.display = 'none';
-  document.getElementById('headerTitle').textContent = 'ChordSheet';
+  document.getElementById('headerTitle').textContent = 'songchord mega';
   document.getElementById('headerActions').innerHTML = '';
   // Remove dynamically created song fields
   stopPlayback();
@@ -1712,8 +1718,20 @@ function openChordPopup(value, x, y, showDelete) {
   document.getElementById('chordDeleteBtn').style.display = showDelete ? 'block' : 'none';
   autocompleteIdx = -1;
 
+  // Edit-mode: diagram at top; new-mode: diagram at bottom
+  popup.classList.toggle('edit-mode', showDelete);
+
   renderNotePicker();
   renderQuickChords();
+  renderChordDiagram(value);
+
+  // Mobile keyboard fix: set readonly so keyboard doesn't auto-open
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (isMobile && showDelete) {
+    input.setAttribute('readonly', '');
+  } else {
+    input.removeAttribute('readonly');
+  }
 
   const vw = window.innerWidth, vh = window.innerHeight;
   let left = Math.min(x - 140, vw - 290);
@@ -1723,7 +1741,9 @@ function openChordPopup(value, x, y, showDelete) {
   popup.style.left = Math.max(8, left) + 'px';
   popup.style.top = Math.max(60, top) + 'px';
   popup.classList.add('visible');
-  setTimeout(() => { input.focus(); input.select(); }, 50);
+  if (!isMobile || !showDelete) {
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+  }
   updateAutocomplete();
 }
 
@@ -1748,8 +1768,10 @@ function pickRoot(root) {
   // Acts like typing the letter: sets input and shows filtered list
   const input = document.getElementById('chordInput');
   input.value = root;
+  input.removeAttribute('readonly');
   input.focus();
   updateAutocomplete();
+  renderChordDiagram(root);
 }
 
 function renderQuickChords() {
@@ -1854,6 +1876,7 @@ function updateAutocomplete() {
 function selectAutocomplete(chord) {
   document.getElementById('chordInput').value = chord;
   document.getElementById('autocompleteList').innerHTML = '';
+  renderChordDiagram(chord);
   saveChord();
 }
 
@@ -1978,7 +2001,11 @@ function resolveConflict(action) {
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('chordInput');
-  input.addEventListener('input', updateAutocomplete);
+  // Mobile: remove readonly when user taps input to type
+  input.addEventListener('touchstart', () => { input.removeAttribute('readonly'); }, { once: false });
+  input.addEventListener('click', () => { input.removeAttribute('readonly'); });
+  // Update diagram on input change
+  input.addEventListener('input', () => { updateAutocomplete(); renderChordDiagram(input.value.trim()); });
   input.addEventListener('keydown', (e) => {
     const items = document.querySelectorAll('#autocompleteList .autocomplete-item');
     if (e.key === 'ArrowDown') {
@@ -2011,6 +2038,277 @@ document.addEventListener('click', (e) => {
   }
 });
 
+
+// ===============================================
+// GUITAR CHORD DIAGRAMS
+// ===============================================
+// frets: [E,A,D,G,B,e] -1=muted, 0=open; barre: fret number or null; baseFret: starting fret
+const CHORD_DB = {
+// === C ===
+'C':      {frets:[0,3,2,0,1,0],   baseFret:1, barre:null},
+'Cm':     {frets:[0,3,1,0,1,3],   baseFret:3, barre:3},
+'C7':     {frets:[0,3,2,3,1,0],   baseFret:1, barre:null},
+'Cmaj7':  {frets:[0,3,2,0,0,0],   baseFret:1, barre:null},
+'Cm7':    {frets:[0,1,3,1,2,1],   baseFret:3, barre:1},
+'Csus2':  {frets:[-1,3,3,0,1,3],  baseFret:1, barre:null},
+'Csus4':  {frets:[-1,3,3,0,1,1],  baseFret:1, barre:null},
+'Cdim':   {frets:[-1,3,4,2,4,2],  baseFret:1, barre:null},
+'Caug':   {frets:[-1,3,2,1,1,0],  baseFret:1, barre:null},
+// === C#/Db ===
+'C#':     {frets:[-1,4,3,1,2,1],  baseFret:1, barre:1},
+'Db':     {frets:[-1,4,3,1,2,1],  baseFret:1, barre:1},
+'C#m':    {frets:[-1,4,2,1,2,0],  baseFret:1, barre:null},
+'Dbm':    {frets:[-1,4,2,1,2,0],  baseFret:1, barre:null},
+'C#7':    {frets:[-1,4,3,4,2,4],  baseFret:1, barre:null},
+'Db7':    {frets:[-1,4,3,4,2,4],  baseFret:1, barre:null},
+'C#maj7': {frets:[-1,4,3,1,1,1],  baseFret:1, barre:1},
+'Dbmaj7': {frets:[-1,4,3,1,1,1],  baseFret:1, barre:1},
+'C#m7':   {frets:[-1,4,2,4,2,4],  baseFret:1, barre:null},
+'Dbm7':   {frets:[-1,4,2,4,2,4],  baseFret:1, barre:null},
+'C#sus2': {frets:[-1,4,4,1,2,4],  baseFret:1, barre:null},
+'C#sus4': {frets:[-1,4,4,1,2,2],  baseFret:1, barre:null},
+'C#dim':  {frets:[-1,4,2,0,2,0],  baseFret:1, barre:null},
+'C#aug':  {frets:[-1,4,3,2,2,1],  baseFret:1, barre:null},
+// === D ===
+'D':      {frets:[-1,0,0,2,3,2],  baseFret:1, barre:null},
+'Dm':     {frets:[-1,0,0,2,3,1],  baseFret:1, barre:null},
+'D7':     {frets:[-1,0,0,2,1,2],  baseFret:1, barre:null},
+'Dmaj7':  {frets:[-1,0,0,2,2,2],  baseFret:1, barre:null},
+'Dm7':    {frets:[-1,0,0,2,1,1],  baseFret:1, barre:null},
+'Dsus2':  {frets:[-1,0,0,2,3,0],  baseFret:1, barre:null},
+'Dsus4':  {frets:[-1,0,0,2,3,3],  baseFret:1, barre:null},
+'Ddim':   {frets:[-1,0,0,1,3,1],  baseFret:1, barre:null},
+'Daug':   {frets:[-1,0,0,3,3,2],  baseFret:1, barre:null},
+// === D#/Eb ===
+'D#':     {frets:[-1,1,1,3,4,3],  baseFret:1, barre:1},
+'Eb':     {frets:[-1,1,1,3,4,3],  baseFret:1, barre:1},
+'D#m':    {frets:[-1,1,1,3,4,2],  baseFret:1, barre:1},
+'Ebm':    {frets:[-1,1,1,3,4,2],  baseFret:1, barre:1},
+'D#7':    {frets:[-1,1,1,3,2,3],  baseFret:1, barre:1},
+'Eb7':    {frets:[-1,1,1,3,2,3],  baseFret:1, barre:1},
+'D#maj7': {frets:[-1,1,1,3,3,3],  baseFret:1, barre:1},
+'Ebmaj7': {frets:[-1,1,1,3,3,3],  baseFret:1, barre:1},
+'D#m7':   {frets:[-1,1,1,3,2,2],  baseFret:1, barre:1},
+'Ebm7':   {frets:[-1,1,1,3,2,2],  baseFret:1, barre:1},
+'D#sus2': {frets:[-1,1,1,3,4,1],  baseFret:1, barre:1},
+'Ebsus2': {frets:[-1,1,1,3,4,1],  baseFret:1, barre:1},
+'D#sus4': {frets:[-1,1,1,3,4,4],  baseFret:1, barre:1},
+'Ebsus4': {frets:[-1,1,1,3,4,4],  baseFret:1, barre:1},
+'D#dim':  {frets:[-1,1,2,1,3,1],  baseFret:1, barre:null},
+'Ebdim':  {frets:[-1,1,2,1,3,1],  baseFret:1, barre:null},
+'D#aug':  {frets:[-1,0,1,0,0,3],  baseFret:1, barre:null},
+'Ebaug':  {frets:[-1,0,1,0,0,3],  baseFret:1, barre:null},
+// === E ===
+'E':      {frets:[0,2,2,1,0,0],   baseFret:1, barre:null},
+'Em':     {frets:[0,2,2,0,0,0],   baseFret:1, barre:null},
+'E7':     {frets:[0,2,0,1,0,0],   baseFret:1, barre:null},
+'Emaj7':  {frets:[0,2,1,1,0,0],   baseFret:1, barre:null},
+'Em7':    {frets:[0,2,0,0,0,0],   baseFret:1, barre:null},
+'Esus2':  {frets:[0,2,4,4,0,0],   baseFret:1, barre:null},
+'Esus4':  {frets:[0,2,2,2,0,0],   baseFret:1, barre:null},
+'Edim':   {frets:[0,1,2,0,2,0],   baseFret:1, barre:null},
+'Eaug':   {frets:[0,3,2,1,1,0],   baseFret:1, barre:null},
+// === F ===
+'F':      {frets:[1,1,2,3,3,1],   baseFret:1, barre:1},
+'Fm':     {frets:[1,1,1,3,3,1],   baseFret:1, barre:1},
+'F7':     {frets:[1,1,2,1,3,1],   baseFret:1, barre:1},
+'Fmaj7':  {frets:[-1,0,3,2,1,0],  baseFret:1, barre:null},
+'Fm7':    {frets:[1,1,1,1,3,1],   baseFret:1, barre:1},
+'Fsus2':  {frets:[-1,0,3,0,1,1],  baseFret:1, barre:null},
+'Fsus4':  {frets:[1,1,3,3,3,1],   baseFret:1, barre:1},
+'Fdim':   {frets:[-1,0,1,2,1,2],  baseFret:1, barre:null},
+'Faug':   {frets:[-1,0,3,2,2,1],  baseFret:1, barre:null},
+// === F#/Gb ===
+'F#':     {frets:[2,4,4,3,2,2],   baseFret:1, barre:2},
+'Gb':     {frets:[2,4,4,3,2,2],   baseFret:1, barre:2},
+'F#m':    {frets:[2,4,4,2,2,2],   baseFret:1, barre:2},
+'Gbm':    {frets:[2,4,4,2,2,2],   baseFret:1, barre:2},
+'F#7':    {frets:[2,4,2,3,2,2],   baseFret:1, barre:2},
+'Gb7':    {frets:[2,4,2,3,2,2],   baseFret:1, barre:2},
+'F#maj7': {frets:[2,4,3,3,2,2],   baseFret:1, barre:2},
+'Gbmaj7': {frets:[2,4,3,3,2,2],   baseFret:1, barre:2},
+'F#m7':   {frets:[2,4,2,2,2,2],   baseFret:1, barre:2},
+'Gbm7':   {frets:[2,4,2,2,2,2],   baseFret:1, barre:2},
+'F#sus2': {frets:[-1,-1,4,1,2,2], baseFret:1, barre:null},
+'F#sus4': {frets:[2,4,4,4,2,2],   baseFret:1, barre:2},
+'F#dim':  {frets:[-1,-1,4,2,1,2], baseFret:1, barre:null},
+'F#aug':  {frets:[-1,-1,4,3,3,2], baseFret:1, barre:null},
+// === G ===
+'G':      {frets:[3,2,0,0,0,3],   baseFret:1, barre:null},
+'Gm':     {frets:[3,1,0,0,3,3],   baseFret:1, barre:3},
+'G7':     {frets:[3,2,0,0,0,1],   baseFret:1, barre:null},
+'Gmaj7':  {frets:[3,2,0,0,0,2],   baseFret:1, barre:null},
+'Gm7':    {frets:[3,5,3,3,3,3],   baseFret:1, barre:3},
+'Gsus2':  {frets:[3,0,0,0,3,3],   baseFret:1, barre:null},
+'Gsus4':  {frets:[3,3,0,0,1,3],   baseFret:1, barre:null},
+'Gdim':   {frets:[3,4,2,3,2,-1],  baseFret:1, barre:null},
+'Gaug':   {frets:[3,2,1,0,0,3],   baseFret:1, barre:null},
+// === G#/Ab ===
+'G#':     {frets:[4,3,1,1,1,4],   baseFret:1, barre:1},
+'Ab':     {frets:[4,3,1,1,1,4],   baseFret:1, barre:1},
+'G#m':    {frets:[4,6,6,4,4,4],   baseFret:1, barre:4},
+'Abm':    {frets:[4,6,6,4,4,4],   baseFret:1, barre:4},
+'G#7':    {frets:[4,3,1,1,1,2],   baseFret:1, barre:1},
+'Ab7':    {frets:[4,3,1,1,1,2],   baseFret:1, barre:1},
+'G#maj7': {frets:[4,3,1,1,1,3],   baseFret:1, barre:1},
+'Abmaj7': {frets:[4,3,1,1,1,3],   baseFret:1, barre:1},
+'G#m7':   {frets:[4,6,4,4,4,4],   baseFret:1, barre:4},
+'Abm7':   {frets:[4,6,4,4,4,4],   baseFret:1, barre:4},
+'G#sus2': {frets:[-1,1,1,3,4,1],  baseFret:1, barre:1},
+'Absus2': {frets:[-1,1,1,3,4,1],  baseFret:1, barre:1},
+'G#sus4': {frets:[4,4,1,1,2,4],   baseFret:1, barre:null},
+'Absus4': {frets:[4,4,1,1,2,4],   baseFret:1, barre:null},
+'G#dim':  {frets:[4,5,3,4,3,-1],  baseFret:1, barre:null},
+'Abdim':  {frets:[4,5,3,4,3,-1],  baseFret:1, barre:null},
+'G#aug':  {frets:[0,3,2,1,1,0],   baseFret:1, barre:null},
+'Abaug':  {frets:[0,3,2,1,1,0],   baseFret:1, barre:null},
+// === A ===
+'A':      {frets:[-1,0,2,2,2,0],  baseFret:1, barre:null},
+'Am':     {frets:[-1,0,2,2,1,0],  baseFret:1, barre:null},
+'A7':     {frets:[-1,0,2,0,2,0],  baseFret:1, barre:null},
+'Amaj7':  {frets:[-1,0,2,1,2,0],  baseFret:1, barre:null},
+'Am7':    {frets:[-1,0,2,0,1,0],  baseFret:1, barre:null},
+'Asus2':  {frets:[-1,0,2,2,0,0],  baseFret:1, barre:null},
+'Asus4':  {frets:[-1,0,2,2,3,0],  baseFret:1, barre:null},
+'Adim':   {frets:[-1,0,1,2,1,2],  baseFret:1, barre:null},
+'Aaug':   {frets:[-1,0,3,2,2,1],  baseFret:1, barre:null},
+// === A#/Bb ===
+'A#':     {frets:[-1,1,3,3,3,1],  baseFret:1, barre:1},
+'Bb':     {frets:[-1,1,3,3,3,1],  baseFret:1, barre:1},
+'A#m':    {frets:[-1,1,3,3,2,1],  baseFret:1, barre:1},
+'Bbm':    {frets:[-1,1,3,3,2,1],  baseFret:1, barre:1},
+'A#7':    {frets:[-1,1,3,1,3,1],  baseFret:1, barre:1},
+'Bb7':    {frets:[-1,1,3,1,3,1],  baseFret:1, barre:1},
+'A#maj7': {frets:[-1,1,3,2,3,1],  baseFret:1, barre:1},
+'Bbmaj7': {frets:[-1,1,3,2,3,1],  baseFret:1, barre:1},
+'A#m7':   {frets:[-1,1,3,1,2,1],  baseFret:1, barre:1},
+'Bbm7':   {frets:[-1,1,3,1,2,1],  baseFret:1, barre:1},
+'A#sus2': {frets:[-1,1,3,3,1,1],  baseFret:1, barre:1},
+'Bbsus2': {frets:[-1,1,3,3,1,1],  baseFret:1, barre:1},
+'A#sus4': {frets:[-1,1,3,3,4,1],  baseFret:1, barre:1},
+'Bbsus4': {frets:[-1,1,3,3,4,1],  baseFret:1, barre:1},
+'A#dim':  {frets:[-1,1,2,0,2,0],  baseFret:1, barre:null},
+'Bbdim':  {frets:[-1,1,2,0,2,0],  baseFret:1, barre:null},
+'A#aug':  {frets:[-1,1,0,3,3,2],  baseFret:1, barre:null},
+'Bbaug':  {frets:[-1,1,0,3,3,2],  baseFret:1, barre:null},
+// === B/H ===
+'B':      {frets:[-1,2,4,4,4,2],  baseFret:1, barre:2},
+'H':      {frets:[-1,2,4,4,4,2],  baseFret:1, barre:2},
+'Bm':     {frets:[-1,2,4,4,3,2],  baseFret:1, barre:2},
+'Hm':     {frets:[-1,2,4,4,3,2],  baseFret:1, barre:2},
+'B7':     {frets:[-1,2,1,2,0,2],  baseFret:1, barre:null},
+'H7':     {frets:[-1,2,1,2,0,2],  baseFret:1, barre:null},
+'Bmaj7':  {frets:[-1,2,4,3,4,2],  baseFret:1, barre:2},
+'Hmaj7':  {frets:[-1,2,4,3,4,2],  baseFret:1, barre:2},
+'Bm7':    {frets:[-1,2,4,2,3,2],  baseFret:1, barre:2},
+'Hm7':    {frets:[-1,2,4,2,3,2],  baseFret:1, barre:2},
+'Bsus2':  {frets:[-1,2,4,4,2,2],  baseFret:1, barre:2},
+'Hsus2':  {frets:[-1,2,4,4,2,2],  baseFret:1, barre:2},
+'Bsus4':  {frets:[-1,2,4,4,5,2],  baseFret:1, barre:2},
+'Hsus4':  {frets:[-1,2,4,4,5,2],  baseFret:1, barre:2},
+'Bdim':   {frets:[-1,2,3,1,3,1],  baseFret:1, barre:null},
+'Hdim':   {frets:[-1,2,3,1,3,1],  baseFret:1, barre:null},
+'Baug':   {frets:[-1,2,1,0,0,3],  baseFret:1, barre:null},
+'Haug':   {frets:[-1,2,1,0,0,3],  baseFret:1, barre:null}
+};
+
+function renderChordDiagram(chordName) {
+  const container = document.getElementById('chordDiagram');
+  if (!container) return;
+  if (!chordName) { container.innerHTML = ''; return; }
+  const data = CHORD_DB[chordName];
+  if (!data) { container.innerHTML = ''; return; }
+
+  const frets = data.frets;
+  const barre = data.barre;
+  // Calculate display range
+  const playedFrets = frets.filter(f => f > 0);
+  const minFret = playedFrets.length ? Math.min(...playedFrets) : 1;
+  const maxFret = playedFrets.length ? Math.max(...playedFrets) : 1;
+  let startFret = 1;
+  if (maxFret > 5) startFret = minFret;
+  else if (minFret > 1 && maxFret > 4) startFret = minFret;
+
+  const W = 160, H = 190;
+  const padL = 30, padR = 15, padTop = 28, padBot = 10;
+  const numFrets = 5;
+  const strSpacing = (W - padL - padR) / 5; // 6 strings
+  const fretSpacing = (H - padTop - padBot) / numFrets;
+
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">';
+  // Background
+  svg += '<rect width="'+W+'" height="'+H+'" fill="none"/>';
+
+  const strColor = '#999';
+  const fretColor = '#777';
+  const dotColor = '#e94560';
+  const textColor = '#f0ece2';
+  const mutedColor = '#7a7a9a';
+
+  // Nut (thick bar at top if starting from fret 1)
+  const nutY = padTop;
+  if (startFret === 1) {
+    svg += '<rect x="'+(padL-2)+'" y="'+(nutY-3)+'" width="'+(strSpacing*5+4)+'" height="5" rx="1" fill="'+strColor+'"/>';
+  }
+
+  // Fret lines
+  for (let i = 0; i <= numFrets; i++) {
+    const y = padTop + i * fretSpacing;
+    svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(padL+strSpacing*5)+'" y2="'+y+'" stroke="'+fretColor+'" stroke-width="'+(i===0?2:1)+'"/>';
+  }
+  // String lines
+  for (let s = 0; s < 6; s++) {
+    const x = padL + s * strSpacing;
+    svg += '<line x1="'+x+'" y1="'+padTop+'" x2="'+x+'" y2="'+(padTop+numFrets*fretSpacing)+'" stroke="'+strColor+'" stroke-width="1"/>';
+  }
+
+  // Start fret label
+  if (startFret > 1) {
+    svg += '<text x="'+(padL-8)+'" y="'+(padTop+fretSpacing*0.65)+'" font-size="11" fill="'+mutedColor+'" text-anchor="end" font-family="Inter,sans-serif">'+startFret+'</text>';
+  }
+
+  // Barre
+  if (barre !== null) {
+    const barreFret = barre - startFret + 1;
+    if (barreFret >= 1 && barreFret <= numFrets) {
+      // Find leftmost and rightmost strings in the barre
+      let barreLeft = 5, barreRight = 0;
+      for (let s = 0; s < 6; s++) {
+        if (frets[s] === barre) { barreLeft = Math.min(barreLeft, s); barreRight = Math.max(barreRight, s); }
+      }
+      const by = padTop + (barreFret - 0.5) * fretSpacing;
+      const bx1 = padL + barreLeft * strSpacing;
+      const bx2 = padL + barreRight * strSpacing;
+      svg += '<rect x="'+(bx1-4)+'" y="'+(by-6)+'" width="'+(bx2-bx1+8)+'" height="12" rx="6" fill="'+dotColor+'"/>';
+    }
+  }
+
+  // Finger dots and open/muted markers
+  for (let s = 0; s < 6; s++) {
+    const x = padL + s * strSpacing;
+    const f = frets[s];
+    if (f === -1) {
+      // Muted
+      svg += '<text x="'+x+'" y="'+(padTop-8)+'" font-size="13" fill="'+mutedColor+'" text-anchor="middle" font-family="Inter,sans-serif">\u00d7</text>';
+    } else if (f === 0) {
+      // Open
+      svg += '<circle cx="'+x+'" cy="'+(padTop-12)+'" r="5" fill="none" stroke="'+mutedColor+'" stroke-width="1.5"/>';
+    } else {
+      // Fretted — skip if this string is part of barre at same fret (already drawn)
+      const displayFret = f - startFret + 1;
+      if (displayFret >= 1 && displayFret <= numFrets) {
+        const isBarre = barre !== null && f === barre;
+        if (!isBarre) {
+          const cy = padTop + (displayFret - 0.5) * fretSpacing;
+          svg += '<circle cx="'+x+'" cy="'+cy+'" r="7" fill="'+dotColor+'"/>';
+        }
+      }
+    }
+  }
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
 
 // ===============================================
 // TRANSPOSE

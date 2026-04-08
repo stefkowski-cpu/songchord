@@ -1,0 +1,23 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <rect width="180" height="180" rx="40" fill="#0f0f23"/>
+  <!-- Staff lines -->
+  <line x1="14" y1="48" x2="166" y2="48" stroke="#2a2a5a" stroke-width="2"/>
+  <line x1="14" y1="61" x2="166" y2="61" stroke="#2a2a5a" stroke-width="2"/>
+  <line x1="14" y1="74" x2="166" y2="74" stroke="#2a2a5a" stroke-width="2"/>
+  <line x1="14" y1="87" x2="166" y2="87" stroke="#2a2a5a" stroke-width="2"/>
+  <line x1="14" y1="100" x2="166" y2="100" stroke="#2a2a5a" stroke-width="2"/>
+  <!-- Chord pills -->
+  <rect x="14" y="40" width="38" height="20" rx="10" fill="#e94560"/>
+  <text x="33" y="55" text-anchor="middle" font-family="'Courier New', monospace" font-size="12" font-weight="700" fill="white">Am</text>
+  <rect x="60" y="66" width="32" height="20" rx="10" fill="#1a6b9a"/>
+  <text x="76" y="81" text-anchor="middle" font-family="'Courier New', monospace" font-size="12" font-weight="700" fill="white">F</text>
+  <rect x="100" y="53" width="66" height="20" rx="10" fill="#8e44ad"/>
+  <text x="133" y="68" text-anchor="middle" font-family="'Courier New', monospace" font-size="12" font-weight="700" fill="white">Cmaj7</text>
+  <rect x="36" y="92" width="46" height="20" rx="10" fill="#e67e22"/>
+  <text x="59" y="107" text-anchor="middle" font-family="'Courier New', monospace" font-size="12" font-weight="700" fill="white">G7</text>
+  <!-- Divider -->
+  <line x1="14" y1="122" x2="166" y2="122" stroke="#2a2a5a" stroke-width="1"/>
+  <!-- App name -->
+  <text x="90" y="141" text-anchor="middle" font-family="'Courier New', monospace" font-size="14" font-weight="700" fill="#e94560" letter-spacing="1">songchord</text>
+  <text x="90" y="160" text-anchor="middle" font-family="'Courier New', monospace" font-size="14" font-weight="700" fill="#f0ece2" letter-spacing="2">mega</text>
+</svg>
