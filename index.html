@@ -174,6 +174,46 @@ input, textarea, select, button { font-family: inherit; }
   cursor: pointer; margin-top: 8px;
 }
 
+/* Line list for section assignment */
+.line-list { margin-top: 12px; }
+.line-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  border-radius: 6px; cursor: pointer; min-height: 36px;
+  border: 1px solid transparent; margin-bottom: 2px;
+  font-family: 'Courier Prime', monospace; font-size: 14px;
+  transition: background 0.1s;
+}
+.line-item:hover { background: rgba(255,255,255,0.05); }
+.line-item.selected { background: rgba(233,69,96,0.15); border-color: #e94560; }
+.line-item .line-check {
+  width: 20px; height: 20px; border-radius: 4px; border: 2px solid #4a4a6a;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: transparent;
+}
+.line-item.selected .line-check { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.2); }
+.line-item .line-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.line-item .line-text.empty { color: #4a4a6a; font-style: italic; }
+.line-item .line-badge { flex-shrink: 0; }
+
+.assign-section-bar {
+  display: none; position: sticky; bottom: 64px; left: 0; right: 0;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 10px;
+  padding: 10px; margin-top: 12px; z-index: 50;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
+}
+.assign-section-bar.visible { display: block; }
+.assign-section-bar .bar-label { font-size: 12px; color: #7a7a9a; margin-bottom: 8px; }
+.assign-section-bar .bar-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.assign-section-bar .bar-btn {
+  padding: 8px 14px; border: none; border-radius: 8px; color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+body.light-mode .line-item:hover { background: rgba(0,0,0,0.03); }
+body.light-mode .line-item.selected { background: rgba(233,69,96,0.1); }
+body.light-mode .line-item .line-check { border-color: #ccc; }
+body.light-mode .line-item.selected .line-check { border-color: #e94560; color: #e94560; }
+body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
+
 /* ===== CHORD EDIT TAB ===== */
 .chord-section-block {
   background: #16213e; border-radius: 10px; margin-bottom: 14px;
@@ -230,6 +270,20 @@ input, textarea, select, button { font-family: inherit; }
 }
 #chordPopup.visible { display: block; }
 
+/* Quick-pick rows */
+.quick-pick-section { margin-bottom: 8px; }
+.quick-pick-label { font-size: 10px; color: #7a7a9a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.quick-pick-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.quick-pick-btn {
+  padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 13px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  cursor: pointer; border: none; white-space: nowrap;
+  transition: transform 0.1s, box-shadow 0.1s;
+  min-width: 32px; text-align: center;
+}
+.quick-pick-btn:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.quick-pick-btn.active-root { outline: 2px solid #e94560; outline-offset: 1px; }
+
 /* Recent/frequent chords */
 .recent-chords { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
 .recent-chords .quick-chord {
@@ -240,6 +294,19 @@ input, textarea, select, button { font-family: inherit; }
 }
 .recent-chords .quick-chord:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .recent-label { font-size: 10px; color: #7a7a9a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Editable header title */
+#headerTitle {
+  cursor: text; border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+}
+#headerTitle:hover { border-bottom-color: rgba(255,255,255,0.3); }
+#headerTitleInput {
+  background: none; border: none; border-bottom: 2px solid #e94560;
+  color: inherit; font-size: 18px; font-weight: 600;
+  font-family: inherit; outline: none; width: 100%;
+  padding: 0 0 1px 0;
+}
 
 #chordPopup input {
   width: 100%; background: #1a1a2e; border: 1px solid #4a4a6a;
@@ -467,7 +534,7 @@ body.light-mode .section-edit-header .drag-handle { color: #ccc; }
 
 <div id="header">
   <button class="back-btn" id="backBtn" onclick="navigateBack()">&#8592;</button>
-  <span class="title" id="headerTitle">ChordSheet</span>
+  <span class="title" id="headerTitle" onclick="startEditTitle()">ChordSheet</span>
   <div class="actions" id="headerActions"></div>
   <button id="darkModeToggle" onclick="toggleDarkMode()" style="background:none;border:none;color:#f0ece2;font-size:20px;cursor:pointer;padding:8px" title="Dark/Light Mode">&#9790;</button>
 </div>
@@ -491,8 +558,12 @@ body.light-mode .section-edit-header .drag-handle { color: #ccc; }
     <button onclick="switchTab('chords')">&#9835; Akkorde</button>
   </div>
   <div id="textEditTab">
-    <div id="textSectionsContainer"></div>
-    <button class="add-section-btn" onclick="showSectionTypePicker()">+ Sektion hinzuf&uuml;gen</button>
+    <textarea id="mainTextarea" class="section-textarea" style="width:100%;min-height:150px;border-radius:10px;border:1px solid #2a2a4a;margin-bottom:12px" placeholder="Liedtext eingeben oder einf&uuml;gen..." oninput="onMainTextInput()" onblur="onMainTextBlur()"></textarea>
+    <div id="lineListContainer" class="line-list"></div>
+    <div id="assignSectionBar" class="assign-section-bar">
+      <div class="bar-label" id="assignBarLabel">0 Zeilen ausgew&auml;hlt</div>
+      <div class="bar-buttons" id="assignBarButtons"></div>
+    </div>
   </div>
   <div id="chordEditTab" style="display:none">
     <div id="chordSectionsContainer"></div>
@@ -513,6 +584,7 @@ body.light-mode .section-edit-header .drag-handle { color: #ccc; }
 
 <!-- CHORD PICKER -->
 <div id="chordPopup">
+  <div id="notePickerSection"></div>
   <div id="recentChordsSection"></div>
   <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off">
   <div class="autocomplete-list" id="autocompleteList"></div>
@@ -611,7 +683,6 @@ let editingChord = null;
 let conflictResolve = null;
 let deleteSongId = null;
 let autocompleteIdx = -1;
-let dragSectionId = null;
 
 // ===== CHORD HISTORY (recent + frequency) =====
 let chordHistory = []; // array of { chord, count, lastUsed }
@@ -931,146 +1002,238 @@ function updateField(f, v) {
   saveSongs();
 }
 
+// ===== Editable Title (click on header) =====
+function startEditTitle() {
+  if (!currentSongId) return; // only edit when a song is open
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const titleEl = document.getElementById('headerTitle');
+  const input = document.createElement('input');
+  input.id = 'headerTitleInput';
+  input.value = song.title;
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  function finishEdit() {
+    const val = input.value.trim() || 'Ohne Titel';
+    updateField('title', val);
+    const span = document.createElement('span');
+    span.className = 'title';
+    span.id = 'headerTitle';
+    span.textContent = val;
+    span.onclick = startEditTitle;
+    input.replaceWith(span);
+    // Also update meta field if visible
+    const metaInput = document.querySelector('.song-meta-fields .f-title');
+    if (metaInput) metaInput.value = val;
+  }
+
+  input.addEventListener('blur', finishEdit);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = song.title; input.blur(); }
+  });
+}
+
 // ===============================================
-// TEXT TAB
+// TEXT TAB: Single textarea + line list with section assignment
 // ===============================================
+let selectedLineIds = new Set(); // selected line IDs for section assignment
+
 function renderTextTab() {
   const song = getSong(currentSongId);
   if (!song) return;
-  const c = document.getElementById('textSectionsContainer');
-  c.innerHTML = song.sections.map(sec => {
-    const text = sec.lines.map(l => l.text).join('\n');
-    return '<div class="section-edit-block" data-section-id="'+sec.id+'" draggable="true" ' +
-      'ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ' +
-      'ondrop="onDrop(event)" ondragend="onDragEnd(event)">' +
-      '<div class="section-edit-header">' +
-      '<span class="drag-handle">&#10303;</span>' +
-      '<span class="section-badge '+sec.type+'">'+esc(sec.type)+'</span>' +
-      '<input class="section-label-input" value="'+esc(sec.label||'')+'" placeholder="Label..." ' +
-        'onchange="updateSectionLabel(\''+sec.id+'\',this.value)">' +
-      '<select onchange="updateSectionType(\''+sec.id+'\',this.value)">' +
-      SECTION_TYPES.map(t => '<option'+(t===sec.type?' selected':'')+'>'+t+'</option>').join('') +
-      '</select>' +
-      '<span class="sec-actions">' +
-      '<button onclick="deleteSection(\''+sec.id+'\')" title="L\u00f6schen">&#10005;</button>' +
-      '</span></div>' +
-      '<div class="section-edit-body">' +
-      '<textarea class="section-textarea" placeholder="Liedtext eingeben..." ' +
-        'oninput="onTextareaInput(\''+sec.id+'\',this)" ' +
-        'onblur="onTextareaBlur(\''+sec.id+'\',this)">'+esc(text)+'</textarea>' +
-      '</div></div>';
-  }).join('');
+
+  // Build flat text from all sections
+  const allLines = getAllLines(song);
+  const textarea = document.getElementById('mainTextarea');
+  textarea.value = allLines.map(l => l.text).join('\n');
+  autoGrowTextarea(textarea);
+
+  renderLineList();
+  updateAssignBar();
 }
 
-function onTextareaInput(secId, el) {
+function getAllLines(song) {
+  // Returns flat array of { lineId, secId, text, chords, sectionType, sectionLabel }
+  const result = [];
+  song.sections.forEach(sec => {
+    sec.lines.forEach(ln => {
+      result.push({ lineId: ln.id, secId: sec.id, text: ln.text, chords: ln.chords, sectionType: sec.type, sectionLabel: sec.label });
+    });
+  });
+  return result;
+}
+
+function getFlatLines(song) {
+  const flat = [];
+  song.sections.forEach(sec => sec.lines.forEach(ln => flat.push(ln)));
+  return flat;
+}
+
+function onMainTextInput() {
+  const textarea = document.getElementById('mainTextarea');
+  autoGrowTextarea(textarea);
+}
+
+function onMainTextBlur() {
+  const textarea = document.getElementById('mainTextarea');
+  syncMainTextToSong(textarea.value);
+  renderLineList();
+}
+
+function autoGrowTextarea(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
 }
 
-function onTextareaBlur(secId, el) {
-  syncTextToSection(secId, el.value);
-}
-
-function syncTextToSection(secId, rawText) {
+function syncMainTextToSong(rawText) {
   const song = getSong(currentSongId);
   if (!song) return;
-  const sec = song.sections.find(s => s.id === secId);
-  if (!sec) return;
-  const newLines = rawText.split('\n');
-  const oldLines = sec.lines;
-  const merged = [];
-  for (let i = 0; i < newLines.length; i++) {
-    if (i < oldLines.length) {
-      const old = oldLines[i];
-      const chords = old.chords.filter(ch => ch.charIndex <= newLines[i].length);
-      merged.push({ id: old.id, text: newLines[i], chords });
+
+  const newTextLines = rawText.split('\n');
+  const oldFlat = getFlatLines(song);
+
+  // Merge: preserve existing line IDs and chords where possible
+  const mergedLines = [];
+  for (let i = 0; i < newTextLines.length; i++) {
+    if (i < oldFlat.length) {
+      const old = oldFlat[i];
+      const chords = old.chords.filter(ch => ch.charIndex <= newTextLines[i].length);
+      mergedLines.push({ id: old.id, text: newTextLines[i], chords });
     } else {
-      merged.push({ id: uid(), text: newLines[i], chords: [] });
+      mergedLines.push({ id: uid(), text: newTextLines[i], chords: [] });
     }
   }
-  sec.lines = merged;
+
+  // Rebuild sections: keep section assignments for lines that still exist
+  // Build a map: lineId -> sectionInfo
+  const lineToSection = {};
+  song.sections.forEach(sec => {
+    sec.lines.forEach(ln => {
+      lineToSection[ln.id] = { type: sec.type, label: sec.label, _spacerChords: sec._spacerChords };
+    });
+  });
+
+  // Group merged lines into sections: consecutive lines with same section stay together
+  const newSections = [];
+  let currentSec = null;
+
+  for (const ln of mergedLines) {
+    const info = lineToSection[ln.id];
+    const type = info ? info.type : 'Verse';
+    const label = info ? info.label : 'Verse';
+
+    if (!currentSec || currentSec.type !== type || currentSec.label !== label) {
+      currentSec = { id: uid(), type, label, lines: [], _spacerChords: info ? info._spacerChords : {} };
+      newSections.push(currentSec);
+    }
+    currentSec.lines.push(ln);
+  }
+
+  if (!newSections.length) {
+    newSections.push({ id: uid(), type: 'Verse', label: 'Verse', lines: [{ id: uid(), text: '', chords: [] }] });
+  }
+
+  song.sections = newSections;
   saveSongs();
 }
 
-// ===== Section Management =====
-function showSectionTypePicker() {
-  const picker = document.getElementById('sectionTypePicker');
-  picker.innerHTML = SECTION_TYPES.map(t =>
-    '<button onclick="addSection(\''+t+'\')"><span class="section-badge '+t+'" style="margin-right:8px">'+t+'</span> '+t+'</button>'
-  ).join('');
-  picker.classList.add('visible');
+function renderLineList() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const container = document.getElementById('lineListContainer');
+  const allLines = getAllLines(song);
+
+  if (!allLines.length) {
+    container.innerHTML = '<div style="color:#7a7a9a;font-size:13px;padding:8px">Text oben eingeben, dann hier Zeilen ausw&auml;hlen und Sektionen zuweisen.</div>';
+    return;
+  }
+
+  let lastSecId = null;
+  container.innerHTML = allLines.map((l, idx) => {
+    const isSelected = selectedLineIds.has(l.lineId);
+    const showSectionHeader = l.secId !== lastSecId;
+    lastSecId = l.secId;
+    let html = '';
+    if (showSectionHeader) {
+      html += '<div style="margin-top:' + (idx > 0 ? '10' : '0') + 'px;margin-bottom:2px">' +
+        '<span class="section-badge ' + l.sectionType + '" style="font-size:11px">' + esc(l.sectionLabel || l.sectionType) + '</span></div>';
+    }
+    const textDisplay = l.text.trim() ? esc(l.text) : '<span class="empty">(leer)</span>';
+    html += '<div class="line-item' + (isSelected ? ' selected' : '') + '" onclick="toggleLineSelect(\'' + l.lineId + '\')" data-line-id="' + l.lineId + '">' +
+      '<span class="line-check">' + (isSelected ? '&#10003;' : '') + '</span>' +
+      '<span class="line-text">' + textDisplay + '</span>' +
+      (l.chords.length ? '<span class="line-badge" style="font-size:10px;color:#7a7a9a">' + l.chords.length + ' Akkorde</span>' : '') +
+      '</div>';
+    return html;
+  }).join('');
 }
+
+function toggleLineSelect(lineId) {
+  if (selectedLineIds.has(lineId)) {
+    selectedLineIds.delete(lineId);
+  } else {
+    selectedLineIds.add(lineId);
+  }
+  renderLineList();
+  updateAssignBar();
+}
+
+function updateAssignBar() {
+  const bar = document.getElementById('assignSectionBar');
+  const count = selectedLineIds.size;
+  if (count === 0) {
+    bar.classList.remove('visible');
+    return;
+  }
+  bar.classList.add('visible');
+  document.getElementById('assignBarLabel').textContent = count + ' Zeile' + (count > 1 ? 'n' : '') + ' ausgew\u00e4hlt \u2192 Sektion zuweisen:';
+  document.getElementById('assignBarButtons').innerHTML = SECTION_TYPES.map(t => {
+    const colors = { 'Intro':'#4a4a6a','Verse':'#0f3460','Pre-Chorus':'#1a5276','Chorus':'#e67e22','Bridge':'#8e44ad','Solo':'#c0392b','Interlude':'#4a4a6a','Outro':'#4a4a6a' };
+    return '<button class="bar-btn" style="background:' + (colors[t]||'#4a4a6a') + '" onclick="assignSectionType(\'' + t + '\')">' + t + '</button>';
+  }).join('');
+}
+
+function assignSectionType(type) {
+  const song = getSong(currentSongId);
+  if (!song || !selectedLineIds.size) return;
+
+  // For each selected line, find it and mark it with the new section type
+  // Strategy: rebuild sections so selected lines form their own section(s)
+  const flat = [];
+  song.sections.forEach(sec => {
+    sec.lines.forEach(ln => {
+      flat.push({
+        ...ln,
+        _secType: selectedLineIds.has(ln.id) ? type : sec.type,
+        _secLabel: selectedLineIds.has(ln.id) ? type : sec.label,
+        _spacerChords: sec._spacerChords
+      });
+    });
+  });
+
+  // Group consecutive lines by type+label
+  const newSections = [];
+  let cur = null;
+  for (const ln of flat) {
+    if (!cur || cur.type !== ln._secType || cur.label !== ln._secLabel) {
+      cur = { id: uid(), type: ln._secType, label: ln._secLabel, lines: [], _spacerChords: ln._spacerChords || {} };
+      newSections.push(cur);
+    }
+    cur.lines.push({ id: ln.id, text: ln.text, chords: ln.chords });
+  }
+
+  song.sections = newSections;
+  selectedLineIds.clear();
+  saveSongs();
+  renderLineList();
+  updateAssignBar();
+}
+
 function hideSectionTypePicker() { document.getElementById('sectionTypePicker').classList.remove('visible'); }
 
-function addSection(type) {
-  hideSectionTypePicker();
-  const song = getSong(currentSongId);
-  if (!song) return;
-  song.sections.push({ id: uid(), type, label: type, lines: [{ id: uid(), text: '', chords: [] }] });
-  saveSongs();
-  renderTextTab();
-  const textareas = document.querySelectorAll('.section-textarea');
-  if (textareas.length) textareas[textareas.length-1].focus();
-}
-
-function deleteSection(secId) {
-  const song = getSong(currentSongId);
-  if (!song) return;
-  song.sections = song.sections.filter(s => s.id !== secId);
-  saveSongs();
-  if (currentTab === 'text') renderTextTab(); else renderChordTab();
-}
-
-function updateSectionType(secId, type) {
-  const song = getSong(currentSongId);
-  if (!song) return;
-  const sec = song.sections.find(s => s.id === secId);
-  if (sec) { sec.type = type; saveSongs(); renderTextTab(); }
-}
-
-function updateSectionLabel(secId, label) {
-  const song = getSong(currentSongId);
-  if (!song) return;
-  const sec = song.sections.find(s => s.id === secId);
-  if (sec) { sec.label = label; saveSongs(); }
-}
-
-// ===== Drag & Drop =====
-function onDragStart(e) {
-  const block = e.target.closest('.section-edit-block');
-  if (!block) return;
-  dragSectionId = block.dataset.sectionId;
-  block.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function onDragOver(e) {
-  e.preventDefault();
-  const block = e.target.closest('.section-edit-block');
-  if (block && block.dataset.sectionId !== dragSectionId) block.classList.add('drag-over');
-}
-function onDragLeave(e) {
-  const block = e.target.closest('.section-edit-block');
-  if (block) block.classList.remove('drag-over');
-}
-function onDrop(e) {
-  e.preventDefault();
-  const block = e.target.closest('.section-edit-block');
-  if (!block || !dragSectionId) return;
-  block.classList.remove('drag-over');
-  const targetId = block.dataset.sectionId;
-  if (targetId === dragSectionId) return;
-  const song = getSong(currentSongId);
-  const from = song.sections.findIndex(s => s.id === dragSectionId);
-  const to = song.sections.findIndex(s => s.id === targetId);
-  if (from < 0 || to < 0) return;
-  const [moved] = song.sections.splice(from, 1);
-  song.sections.splice(to, 0, moved);
-  saveSongs(); renderTextTab();
-}
-function onDragEnd() {
-  dragSectionId = null;
-  document.querySelectorAll('.section-edit-block').forEach(b => b.classList.remove('dragging','drag-over'));
-}
 
 // ===============================================
 // CHORD TAB: Spacer lines + Dots
@@ -1219,14 +1382,14 @@ function openChordPopup(value, x, y, showDelete) {
   document.getElementById('chordDeleteBtn').style.display = showDelete ? 'block' : 'none';
   autocompleteIdx = -1;
 
-  // Render recent/frequent chords
+  renderNotePicker();
   renderQuickChords();
 
   const vw = window.innerWidth, vh = window.innerHeight;
   let left = Math.min(x - 140, vw - 290);
-  let top = y - 160;
+  let top = y - 200;
   if (top < 60) top = y + 10;
-  if (top + 350 > vh) top = vh - 360;
+  if (top + 450 > vh) top = vh - 460;
   popup.style.left = Math.max(8, left) + 'px';
   popup.style.top = Math.max(60, top) + 'px';
   popup.classList.add('visible');
@@ -1234,25 +1397,41 @@ function openChordPopup(value, x, y, showDelete) {
   updateAutocomplete();
 }
 
+// ===== Note Picker: Base notes only, click = type letter =====
+const PICK_ROOTS = ['C','D','E','F','G','A','B','H'];
+
+function renderNotePicker() {
+  const section = document.getElementById('notePickerSection');
+  let html = '<div class="quick-pick-section">' +
+    '<div class="quick-pick-label">Grundton</div>' +
+    '<div class="quick-pick-row">';
+  PICK_ROOTS.forEach(r => {
+    html += '<button class="quick-pick-btn" style="background:' + getChordColor(r) +
+      '" onclick="pickRoot(\'' + r + '\')">' + r + '</button>';
+  });
+  html += '</div></div>';
+  section.innerHTML = html;
+}
+
+function pickRoot(root) {
+  // Acts like typing the letter: sets input and shows filtered list
+  const input = document.getElementById('chordInput');
+  input.value = root;
+  input.focus();
+  updateAutocomplete();
+}
+
 function renderQuickChords() {
   const section = document.getElementById('recentChordsSection');
   const songChords = getCurrentSongChords();
   const recent = getRecentChords(12);
-  // Merge: song chords first, then recent, deduplicated
   const seen = new Set();
   const quickList = [];
-  for (const c of songChords) {
-    if (!seen.has(c)) { seen.add(c); quickList.push(c); }
-  }
-  for (const c of recent) {
-    if (!seen.has(c)) { seen.add(c); quickList.push(c); }
-  }
+  for (const c of songChords) { if (!seen.has(c)) { seen.add(c); quickList.push(c); } }
+  for (const c of recent) { if (!seen.has(c)) { seen.add(c); quickList.push(c); } }
   const display = quickList.slice(0, 14);
 
-  if (!display.length) {
-    section.innerHTML = '';
-    return;
-  }
+  if (!display.length) { section.innerHTML = ''; return; }
 
   section.innerHTML =
     '<div class="recent-label">Zuletzt / h&auml;ufig verwendet</div>' +
@@ -1404,18 +1583,11 @@ function importPastedText() {
 }
 
 function createSongFromText(title, rawText) {
-  const blocks = rawText.split(/\n\s*\n/).filter(b => b.trim());
-  const sections = [];
-  for (const block of blocks) {
-    const lines = block.split('\n');
-    let type = 'Verse', label = type, textLines = lines;
-    if (lines.length > 1) {
-      const detected = detectSectionType(lines[0].trim());
-      if (detected) { type = detected; label = lines[0].trim(); textLines = lines.slice(1); }
-    }
-    sections.push({ id: uid(), type, label, lines: textLines.map(t => ({ id: uid(), text: t, chords: [] })) });
-  }
-  if (!sections.length) sections.push({ id: uid(), type:'Verse', label:'Verse', lines:[{id:uid(),text:'',chords:[]}] });
+  // No auto-sectioning: all text goes into one Verse section
+  const allLines = rawText.split('\n');
+  const lines = allLines.map(t => ({ id: uid(), text: t, chords: [] }));
+  if (!lines.length) lines.push({ id: uid(), text: '', chords: [] });
+  const sections = [{ id: uid(), type: 'Verse', label: 'Verse', lines }];
   const song = { id: uid(), title, key: '', bpm: null, createdAt: new Date().toISOString(), sections };
   songs.unshift(song);
   saveSongs();
@@ -1506,14 +1678,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Auto-grow textareas
-const observer = new MutationObserver(() => {
-  document.querySelectorAll('.section-textarea').forEach(ta => {
-    ta.style.height = 'auto';
-    ta.style.height = ta.scrollHeight + 'px';
-  });
-});
-observer.observe(document.getElementById('textSectionsContainer'), { childList: true });
 
 // ===============================================
 // INIT
