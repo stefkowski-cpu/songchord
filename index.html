@@ -309,12 +309,29 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
 #chordPopup {
   display: none; position: fixed; z-index: 200;
   background: #222244; border: 1px solid #4a4a6a; border-radius: 10px;
-  padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  padding: 0; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   width: 280px; flex-direction: column;
-  max-height: 80vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  max-height: 75vh; overflow: hidden;
 }
 #chordPopup.visible { display: flex; }
+.chord-popup-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px 6px; border-bottom: 1px solid #3a3a5a; flex-shrink: 0;
+}
+.chord-popup-header .popup-chord-title {
+  font-size: 15px; font-weight: 700; font-family: 'Courier Prime', monospace; color: #f0ece2;
+}
+.chord-popup-header .popup-close-btn {
+  background: none; border: none; color: #7a7a9a; font-size: 20px; cursor: pointer; padding: 0 4px;
+}
+.chord-popup-header .popup-close-btn:hover { color: #e94560; }
+.chord-popup-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain; padding: 8px 10px 10px;
+}
 #chordPopup.edit-mode #chordDiagram { order: -1; }
+body.light-mode .chord-popup-header { border-bottom-color: #ddd; }
+body.light-mode .chord-popup-header .popup-chord-title { color: #1a1a2e; }
 
 /* Quick-pick rows */
 .quick-pick-section { margin-bottom: 8px; }
@@ -681,15 +698,21 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
 
 <!-- CHORD PICKER -->
 <div id="chordPopup">
-  <div id="notePickerSection"></div>
-  <div id="recentChordsSection"></div>
-  <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off">
-  <div class="autocomplete-list" id="autocompleteList"></div>
-  <div id="chordDiagram"></div>
-  <div class="popup-actions">
-    <button class="popup-btn-save" onclick="saveChord()">OK</button>
-    <button class="popup-btn-del" id="chordDeleteBtn" onclick="deleteChord()" style="display:none">&#10005;</button>
-    <button class="popup-btn-cancel" onclick="closeChordPopup()">Abbrechen</button>
+  <div class="chord-popup-header">
+    <span class="popup-chord-title" id="popupChordTitle">Akkord</span>
+    <button class="popup-close-btn" onclick="closeChordPopup()">&times;</button>
+  </div>
+  <div class="chord-popup-scroll" id="chordPopupScroll">
+    <div id="chordDiagram"></div>
+    <div id="notePickerSection"></div>
+    <div id="recentChordsSection"></div>
+    <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off" readonly inputmode="none">
+    <div class="autocomplete-list" id="autocompleteList"></div>
+    <div class="popup-actions">
+      <button class="popup-btn-save" onclick="saveChord()">OK</button>
+      <button class="popup-btn-del" id="chordDeleteBtn" onclick="deleteChord()" style="display:none">&#10005;</button>
+      <button class="popup-btn-cancel" onclick="closeChordPopup()">Abbrechen</button>
+    </div>
   </div>
 </div>
 
@@ -1716,24 +1739,21 @@ function openChordPopup(value, x, y, showDelete) {
   const popup = document.getElementById('chordPopup');
   const input = document.getElementById('chordInput');
   input.value = value;
+  // Always start locked — only direct tap on input unlocks
+  input.setAttribute('readonly', '');
+  input.setAttribute('inputmode', 'none');
   document.getElementById('chordDeleteBtn').style.display = showDelete ? 'block' : 'none';
   autocompleteIdx = -1;
 
   // Edit-mode: diagram at top; new-mode: diagram at bottom
   popup.classList.toggle('edit-mode', showDelete);
 
+  // Update header title
+  document.getElementById('popupChordTitle').textContent = value || 'Akkord';
+
   renderNotePicker();
   renderQuickChords();
   renderChordDiagram(value);
-
-  // Mobile/iOS keyboard fix: prevent auto-open via readonly + inputmode
-  if (showDelete) {
-    input.setAttribute('readonly', '');
-    input.setAttribute('inputmode', 'none');
-  } else {
-    input.removeAttribute('readonly');
-    input.setAttribute('inputmode', 'text');
-  }
 
   const vw = window.innerWidth, vh = window.innerHeight;
   let left = Math.min(x - 140, vw - 290);
@@ -1743,9 +1763,9 @@ function openChordPopup(value, x, y, showDelete) {
   popup.style.left = Math.max(8, left) + 'px';
   popup.style.top = Math.max(60, top) + 'px';
   popup.classList.add('visible');
-  if (!showDelete) {
-    setTimeout(() => { input.focus(); input.select(); }, 50);
-  }
+  // Scroll to top
+  const scrollArea = document.getElementById('chordPopupScroll');
+  if (scrollArea) scrollArea.scrollTop = 0;
   updateAutocomplete();
 }
 
@@ -1767,13 +1787,15 @@ function renderNotePicker() {
 }
 
 function pickRoot(root) {
-  // Acts like typing the letter: sets input and shows filtered list
+  // Acts like typing the letter: sets input and shows filtered list — no keyboard
   const input = document.getElementById('chordInput');
   input.value = root;
-  input.removeAttribute('readonly');
-  input.focus();
+  document.getElementById('popupChordTitle').textContent = root;
   updateAutocomplete();
   renderChordDiagram(root);
+  // Scroll down so autocomplete list is visible
+  const scrollArea = document.getElementById('chordPopupScroll');
+  if (scrollArea) setTimeout(() => scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' }), 50);
 }
 
 function renderQuickChords() {
@@ -1798,6 +1820,7 @@ function renderQuickChords() {
 
 function quickSelectChord(chord) {
   document.getElementById('chordInput').value = chord;
+  document.getElementById('popupChordTitle').textContent = chord;
   saveChord();
 }
 
@@ -1877,6 +1900,7 @@ function updateAutocomplete() {
 
 function selectAutocomplete(chord) {
   document.getElementById('chordInput').value = chord;
+  document.getElementById('popupChordTitle').textContent = chord;
   document.getElementById('autocompleteList').innerHTML = '';
   renderChordDiagram(chord);
   saveChord();
@@ -2003,12 +2027,19 @@ function resolveConflict(action) {
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('chordInput');
-  // Mobile/iOS: remove readonly + restore inputmode when user taps input to type
+  // Only unlock keyboard when user directly taps the input field
   function unlockInput() { input.removeAttribute('readonly'); input.setAttribute('inputmode', 'text'); }
   input.addEventListener('touchstart', unlockInput, { once: false });
   input.addEventListener('click', unlockInput);
-  // Update diagram on input change
-  input.addEventListener('input', () => { updateAutocomplete(); renderChordDiagram(input.value.trim()); });
+  // Update diagram + header + autocomplete on input change
+  input.addEventListener('input', () => {
+    const v = input.value.trim();
+    document.getElementById('popupChordTitle').textContent = v || 'Akkord';
+    updateAutocomplete();
+    renderChordDiagram(v);
+    const scrollArea = document.getElementById('chordPopupScroll');
+    if (scrollArea) setTimeout(() => scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' }), 50);
+  });
   input.addEventListener('keydown', (e) => {
     const items = document.querySelectorAll('#autocompleteList .autocomplete-item');
     if (e.key === 'ArrowDown') {
