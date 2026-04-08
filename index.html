@@ -331,6 +331,7 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
 body.light-mode #chordPopup { background: #f5f5f0; border-top-color: #ddd; }
 body.light-mode .chord-popup-header { background: #f5f5f0; }
 body.light-mode .chord-popup-header .popup-chord-title { color: #1a1a2e; }
+body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
 
 /* Quick-pick rows */
 .quick-pick-section { margin-bottom: 8px; }
@@ -355,6 +356,8 @@ body.light-mode .chord-popup-header .popup-chord-title { color: #1a1a2e; }
   transition: transform 0.1s, box-shadow 0.1s;
 }
 .recent-chords .quick-chord:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.recent-chords .quick-chord.selected-chord { outline: 2px solid #fff; outline-offset: 1px; transform: scale(1.08); }
+.autocomplete-item.selected-chord { background: #0f3460; outline: 1px solid #e94560; }
 .recent-label { font-size: 10px; color: #7a7a9a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* Editable header title */
@@ -390,12 +393,16 @@ body.light-mode .chord-popup-header .popup-chord-title { color: #1a1a2e; }
 }
 #chordDiagram { display: flex; justify-content: center; margin: 8px 0; }
 #chordDiagram:empty { display: none; }
-#chordPopup .popup-actions { display: flex; gap: 6px; margin-top: 8px; }
-#chordPopup .popup-actions button {
-  flex: 1; padding: 8px; border: none; border-radius: 6px;
-  font-size: 13px; font-weight: 600; cursor: pointer;
+#chordPopup .popup-actions {
+  display: flex; gap: 6px; padding: 12px 0;
+  position: sticky; bottom: 0; background: #1a1a2e; z-index: 1;
 }
-.popup-btn-save { background: #e94560; color: #fff; }
+#chordPopup .popup-actions button {
+  flex: 1; padding: 10px; border: none; border-radius: 6px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.popup-btn-save { background: #e94560; color: #fff; transition: opacity 0.15s; }
+.popup-btn-save:disabled { opacity: 0.35; cursor: default; }
 .popup-btn-del { background: #4a4a6a; color: #fff; }
 .popup-btn-cancel { background: none; color: #7a7a9a; border: 1px solid #4a4a6a !important; }
 
@@ -704,7 +711,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
   <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off" readonly inputmode="none">
   <div class="autocomplete-list" id="autocompleteList"></div>
   <div class="popup-actions">
-    <button class="popup-btn-save" onclick="saveChord()">OK</button>
+    <button class="popup-btn-save" id="chordOkBtn" onclick="saveChord()" disabled>OK</button>
     <button class="popup-btn-del" id="chordDeleteBtn" onclick="deleteChord()" style="display:none">&#10005;</button>
     <button class="popup-btn-cancel" onclick="closeChordPopup()">Abbrechen</button>
   </div>
@@ -1749,6 +1756,9 @@ function openChordPopup(value, x, y, showDelete) {
   renderQuickChords();
   renderChordDiagram(value);
 
+  // OK button: enabled only if a chord is already set (edit mode)
+  document.getElementById('chordOkBtn').disabled = !value;
+
   popup.classList.add('visible');
   popup.scrollTop = 0;
   updateAutocomplete();
@@ -1778,6 +1788,8 @@ function pickRoot(root) {
   document.getElementById('popupChordTitle').textContent = root;
   updateAutocomplete();
   renderChordDiagram(root);
+  highlightSelectedChord(root);
+  document.getElementById('chordOkBtn').disabled = false;
   // Scroll down so autocomplete list is visible
   const popup = document.getElementById('chordPopup');
   setTimeout(() => popup.scrollTo({ top: popup.scrollHeight, behavior: 'smooth' }), 50);
@@ -1806,7 +1818,22 @@ function renderQuickChords() {
 function quickSelectChord(chord) {
   document.getElementById('chordInput').value = chord;
   document.getElementById('popupChordTitle').textContent = chord;
-  saveChord();
+  renderChordDiagram(chord);
+  updateAutocomplete();
+  highlightSelectedChord(chord);
+  document.getElementById('chordOkBtn').disabled = false;
+}
+
+function highlightSelectedChord(chord) {
+  document.querySelectorAll('.quick-chord.selected-chord').forEach(el => el.classList.remove('selected-chord'));
+  document.querySelectorAll('.autocomplete-item.selected-chord').forEach(el => el.classList.remove('selected-chord'));
+  document.querySelectorAll('.quick-chord').forEach(el => {
+    if (el.textContent === chord) el.classList.add('selected-chord');
+  });
+  document.querySelectorAll('.autocomplete-item').forEach(el => {
+    const badge = el.querySelector('.ac-badge');
+    if (badge && badge.textContent === chord) el.classList.add('selected-chord');
+  });
 }
 
 function saveChord() {
@@ -1888,7 +1915,8 @@ function selectAutocomplete(chord) {
   document.getElementById('popupChordTitle').textContent = chord;
   document.getElementById('autocompleteList').innerHTML = '';
   renderChordDiagram(chord);
-  saveChord();
+  highlightSelectedChord(chord);
+  document.getElementById('chordOkBtn').disabled = false;
 }
 
 // ===============================================
