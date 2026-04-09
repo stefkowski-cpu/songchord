@@ -474,6 +474,21 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
   white-space: nowrap; line-height: 18px;
 }
 
+/* ===== CHORD PREVIEW PLAY ===== */
+.chord-play-btn {
+  background: none; border: 1px solid #2a2a4a; color: #f0ece2;
+  border-radius: 50%; width: 34px; height: 34px; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+.chord-play-btn:active { background: rgba(255,255,255,0.1); }
+
+/* ===== CREDITS ===== */
+.credits {
+  text-align: center; color: #4a4a6a; font-size: 11px;
+  line-height: 1.7; padding: 24px 16px 8px; font-style: italic;
+}
+
 /* ===== PRINT ===== */
 .print-header { display: none; }
 @media print {
@@ -482,7 +497,7 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
   .song-title-input, .song-notes-field, .history-btn,
   .transpose-row, .playback-row,
   .sec-actions, .drag-handle, #chordPopup, #sectionTypePicker,
-  .modal-overlay, .list-toolbar, #darkModeToggle,
+  .modal-overlay, .list-toolbar, #darkModeToggle, .credits,
   .dot-row { display: none !important; }
   .view { display: none !important; }
   #songView { display: block !important; padding: 20px !important; max-width: none !important; }
@@ -671,6 +686,10 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
     <button class="toolbar-btn secondary" onclick="exportAllSongs()">&#11015; Backup</button>
   </div>
   <div id="songListContainer"></div>
+  <div class="credits">
+    <p>songchord mega ist eine mithilfe von Claude Code entwickelte Web App f&uuml;r den privaten Gebrauch.</p>
+    <p>Kontakt: rubichorn@proton.me</p>
+  </div>
 </div>
 
 <!-- VIEW: SONG -->
@@ -710,6 +729,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
 <div id="chordPopup">
   <div class="chord-popup-header">
     <span class="popup-chord-title" id="popupChordTitle">Akkord</span>
+    <button class="chord-play-btn" onclick="playPreviewChord()">&#9654;</button>
     <button class="popup-close-btn" onclick="closeChordPopup()">&times;</button>
   </div>
   <div id="chordDiagram"></div>
@@ -2897,6 +2917,25 @@ function playChordSound(chordName, instrument) {
   const freqs = getChordFrequencies(chordName);
   const now = ctx.currentTime;
   const dur = 0.95;
+  switch(instrument) {
+    case 'piano': playPiano(ctx, freqs, now, dur); break;
+    case 'guitar': playGuitar(ctx, freqs, now, dur); break;
+    case 'eguitar': playEGuitar(ctx, freqs, now, dur); break;
+    case 'xylophone': playXylophone(ctx, freqs, now, dur); break;
+    default: playSynth(ctx, freqs, now, dur);
+  }
+}
+
+function playPreviewChord() {
+  const chord = document.getElementById('chordInput').value.trim();
+  if (!chord) return;
+  const ctx = getAudioCtx();
+  const freqs = getChordFrequencies(chord);
+  if (!freqs.length) return;
+  const now = ctx.currentTime;
+  const dur = 1.5;
+  const instrEl = document.getElementById('instrumentSelect');
+  const instrument = instrEl ? instrEl.value : (localStorage.getItem('chordsheet_instrument') || 'synth');
   switch(instrument) {
     case 'piano': playPiano(ctx, freqs, now, dur); break;
     case 'guitar': playGuitar(ctx, freqs, now, dur); break;
