@@ -695,6 +695,180 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
 /* ===== DRAG ===== */
 .section-edit-block.dragging { opacity: 0.4; }
 .section-edit-block.drag-over { border-top: 3px solid #e94560; }
+
+/* ===== PLAY SCREEN ===== */
+.play-cta-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #e94560, #c0392b); color: #fff;
+  border: none; padding: 14px; border-radius: 12px; width: 100%;
+  font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 12px;
+}
+.play-cta-btn:active { opacity: 0.8; }
+.play-cta-btn .cta-icon { font-size: 22px; }
+
+#viewPlay { padding: 0; }
+.play-top-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  height: 48px; border-bottom: 1px solid #2a2a4a; background: #16213e;
+}
+.play-top-bar .play-back-btn {
+  background: none; border: none; color: #f0ece2; font-size: 20px; cursor: pointer; padding: 6px;
+}
+.play-top-bar .play-title {
+  flex: 1; font-size: 16px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.play-top-bar .tp-header-btn {
+  background: none; border: 1px solid #4a4a6a; color: #f0ece2;
+  padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.play-top-bar .tp-header-btn:active { background: rgba(255,255,255,0.1); }
+.play-mode-tabs {
+  position: fixed; top: 48px; left: 0; right: 0; z-index: 59;
+  display: flex; gap: 0; border-bottom: 1px solid #2a2a4a; background: #1a1a2e;
+  height: 44px; transition: height 0.2s, opacity 0.2s; overflow: hidden;
+}
+.play-mode-tabs.hidden { height: 0; opacity: 0; pointer-events: none; border: none; }
+.play-mode-tabs button {
+  flex: 1; padding: 12px; border: none; background: #1a1a2e;
+  color: #7a7a9a; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.play-mode-tabs button.active { color: #e94560; border-bottom: 2px solid #e94560; }
+body.light-mode .play-top-bar { background: #fff; border-bottom-color: #ddd; }
+body.light-mode .play-top-bar .play-back-btn,
+body.light-mode .play-top-bar .play-title { color: #1a1a2e; }
+body.light-mode .play-top-bar .tp-header-btn { border-color: #ccc; color: #1a1a2e; }
+body.light-mode .play-mode-tabs { background: #f5f5f0; }
+body.light-mode .play-mode-tabs button { background: #f5f5f0; color: #999; }
+body.light-mode .play-mode-tabs button.active { color: #e94560; }
+
+/* Chord Player - fixed chord block */
+.cp-chord-block {
+  position: fixed; top: 92px; left: 0; right: 0; z-index: 58;
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  background: #16213e; border-bottom: 1px solid #2a2a4a; min-height: 64px;
+}
+.cp-chord-block.playing { top: 48px; }
+.cp-chord-info { flex: 1; min-width: 0; }
+.cp-chord-current {
+  font-size: 48px; font-weight: 700; font-family: 'Courier Prime', monospace;
+  padding: 2px 16px; border-radius: 10px; color: #fff; display: inline-block;
+  transition: background 0.2s; line-height: 1.1;
+}
+.cp-chord-next {
+  font-size: 14px; color: #7a7a9a; font-family: 'Courier Prime', monospace;
+  margin-top: 2px;
+}
+.cp-chord-block select {
+  background: #1a1a2e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 8px 10px; border-radius: 8px; font-size: 13px; flex-shrink: 0;
+}
+body.light-mode .cp-chord-block { background: #fff; border-bottom-color: #ddd; }
+body.light-mode .cp-chord-block select { background: #f5f5f0; border-color: #ddd; color: #1a1a2e; }
+
+/* Chord Player - scrollable text area */
+#cpTextArea {
+  position: fixed; top: 156px; bottom: 64px; left: 0; right: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px;
+}
+#cpTextArea.playing { top: 112px; }
+
+/* Current line highlight */
+.play-chord-line.current-line { background: rgba(255,255,255,0.06); border-radius: 4px; }
+body.light-mode .play-chord-line.current-line { background: rgba(0,0,0,0.04); }
+
+/* Bottom CTA */
+.cp-bottom-cta {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 58;
+  height: 64px; background: #e94560; color: #fff; border: none;
+  font-size: 18px; font-weight: 700; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.cp-bottom-cta:active { background: #c0392b; }
+
+/* Read-only chord render for play */
+.play-section-block { margin-bottom: 14px; }
+.play-section-label {
+  font-size: 12px; font-weight: 700; color: #7a7a9a;
+  padding: 6px 0 4px; font-style: italic;
+}
+.play-chord-line { margin-bottom: 0; padding: 1px 4px; transition: background 0.2s; }
+.play-chord-row {
+  position: relative; height: 24px; font-family: 'Courier Prime', monospace;
+  font-size: 13px; font-weight: 700; white-space: pre; user-select: none; overflow: visible;
+}
+.play-chord-row .play-badge {
+  position: absolute; bottom: 0;
+  padding: 1px 5px; border-radius: 4px; color: #fff; font-size: 12px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  white-space: nowrap; line-height: 18px;
+}
+.play-text-row {
+  font-family: 'Courier Prime', monospace; font-size: 15px;
+  white-space: pre; line-height: 22px; min-height: 22px;
+  color: #f0ece2; user-select: none;
+}
+body.light-mode .play-text-row { color: #1a1a2e; }
+body.light-mode .play-section-label { color: #999; }
+
+/* Teleprompter overlay - same colors as app */
+#teleprompterOverlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 500; background: #1a1a2e; color: #f0ece2; overflow: hidden;
+  --tp-font-size: 18px;
+}
+#teleprompterOverlay.visible { display: flex; flex-direction: column; }
+body.light-mode #teleprompterOverlay { background: #f5f5f0; color: #1a1a2e; }
+.tp-toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+  background: #16213e; border-bottom: 1px solid #2a2a4a; flex-shrink: 0; z-index: 2;
+}
+body.light-mode .tp-toolbar { background: #fff; border-bottom-color: #ddd; }
+.tp-toolbar button {
+  background: none; border: 1px solid #4a4a6a; color: #f0ece2;
+  width: 36px; height: 36px; border-radius: 8px; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+body.light-mode .tp-toolbar button { border-color: #ccc; color: #1a1a2e; }
+.tp-toolbar button:active { background: rgba(255,255,255,0.1); }
+.tp-toolbar .tp-title {
+  flex: 1; font-size: 14px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.tp-close { background: #e94560 !important; border-color: #e94560 !important; color: #fff !important; }
+.tp-content {
+  flex: 1; overflow-y: auto; padding: 20px 16px; -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.tp-content .play-section-block { margin-bottom: 20px; }
+.tp-content .play-section-label { font-size: calc(var(--tp-font-size, 18px) * 0.7); color: #7a7a9a; }
+body.light-mode .tp-content .play-section-label { color: #999; }
+.tp-content .play-text-row { font-size: var(--tp-font-size, 18px); color: #f0ece2; line-height: 1.5; }
+body.light-mode .tp-content .play-text-row { color: #1a1a2e; }
+.tp-content .play-chord-row { height: calc(var(--tp-font-size, 18px) * 1.4); }
+.tp-content .play-badge {
+  font-size: calc(var(--tp-font-size, 18px) * 0.75);
+  line-height: calc(var(--tp-font-size, 18px) * 1.1);
+}
+.tp-tap-zone {
+  position: absolute; left: 0; right: 0; z-index: 1; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tp-tap-up { top: 48px; height: calc(50% - 24px); }
+.tp-tap-down { bottom: 0; height: 50%; }
+
+/* Teleprompter panel (inline, not fullscreen) */
+.tp-inline-body {
+  padding: 12px; overflow-y: auto;
+  max-height: calc(100vh - 48px - 44px - 20px);
+}
+
+@media print {
+  #viewPlay, #teleprompterOverlay { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -881,6 +1055,54 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
       <button class="btn-cancel" onclick="document.getElementById('historyModal').classList.remove('visible')">Schlie&szlig;en</button>
     </div>
   </div>
+</div>
+
+<!-- VIEW: PLAY SCREEN -->
+<div class="view" id="viewPlay">
+  <div class="play-top-bar" id="playTopBar">
+    <button class="play-back-btn" onclick="exitPlayScreen()">&#8592;</button>
+    <span class="play-title" id="playScreenTitle">Song</span>
+    <button class="tp-header-btn" onclick="openTeleprompter()">&#128220; Teleprompter</button>
+  </div>
+  <div class="play-mode-tabs" id="playModeTabs">
+    <button id="tabChordPlayer" class="active" onclick="switchPlayMode('chords')">&#9835; Chord Player</button>
+    <button id="tabTeleprompter" onclick="switchPlayMode('teleprompter')">&#128220; Teleprompter</button>
+  </div>
+
+  <!-- Chord Player Panel -->
+  <div id="chordPlayerPanel">
+    <div class="cp-chord-block" id="cpChordBlock">
+      <div class="cp-chord-info">
+        <div class="cp-chord-current" id="cpCurrentChord" style="background:#4a4a6a">-</div>
+        <div class="cp-chord-next" id="cpNextChord">-</div>
+      </div>
+      <select id="cpInstrumentSelect" onchange="localStorage.setItem('chordsheet_instrument',this.value)">
+        <option value="synth">Synth</option><option value="piano">Piano</option>
+        <option value="guitar">Gitarre</option><option value="eguitar">E-Gitarre</option>
+        <option value="xylophone">Xylophon</option>
+      </select>
+    </div>
+    <div id="cpTextArea"></div>
+    <button class="cp-bottom-cta" id="cpBottomCta" onclick="playNextPlayChord()">&#9654; Starten</button>
+  </div>
+
+  <!-- Teleprompter Panel (inline preview) -->
+  <div id="teleprompterPanel" style="display:none">
+    <div id="tpReadonlyBody" class="tp-inline-body"></div>
+  </div>
+</div>
+
+<!-- TELEPROMPTER FULLSCREEN OVERLAY -->
+<div id="teleprompterOverlay">
+  <div class="tp-toolbar">
+    <span class="tp-title" id="tpOverlayTitle">Song</span>
+    <button onclick="tpChangeFontSize(-2)" title="Kleiner">A&#8722;</button>
+    <button onclick="tpChangeFontSize(2)" title="Gr&ouml;&szlig;er">A+</button>
+    <button class="tp-close" onclick="closeTeleprompter()" title="Schlie&szlig;en">&times;</button>
+  </div>
+  <div class="tp-content" id="tpContent"></div>
+  <div class="tp-tap-zone tp-tap-up" onclick="tpScroll(-1)"></div>
+  <div class="tp-tap-zone tp-tap-down" onclick="tpScroll(1)"></div>
 </div>
 
 <script>
@@ -1521,6 +1743,16 @@ function renderSongMeta() {
     histBtn.textContent = '\u{1F552} \u00C4nderungshistorie';
     histBtn.onclick = showHistory;
     pbRow.after(histBtn);
+  }
+  // Play CTA button
+  let playCta = document.getElementById('playCtaBtn');
+  if (!playCta) {
+    playCta = document.createElement('button');
+    playCta.id = 'playCtaBtn';
+    playCta.className = 'play-cta-btn';
+    playCta.innerHTML = '<span class="cta-icon">&#9654;</span> Play';
+    playCta.onclick = function() { showPlayScreen(); };
+    histBtn.after(playCta);
   }
 }
 function updateField(f, v) {
@@ -3309,6 +3541,292 @@ function stopPlayback() {
   const stopBtn = document.getElementById('stopBtn');
   if (playBtn) playBtn.style.display = 'flex';
   if (stopBtn) stopBtn.style.display = 'none';
+}
+
+// ===============================================
+// PLAY SCREEN
+// ===============================================
+let playScreenMode = 'chords'; // 'chords' or 'teleprompter'
+let cpChords = [];
+let cpIndex = 0;
+let cpIsPlaying = false;
+let wakeLockSentinel = null;
+let tpFontSizeVal = 18;
+
+function showPlayScreen() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  stopPlayback();
+  setView('viewPlay');
+  document.getElementById('playScreenTitle').textContent = song.title;
+  document.getElementById('bottomNav').style.display = 'none';
+  document.getElementById('header').style.display = 'none';
+  document.getElementById('playModeTabs').classList.remove('hidden');
+  // Restore instrument
+  const saved = localStorage.getItem('chordsheet_instrument');
+  if (saved) document.getElementById('cpInstrumentSelect').value = saved;
+  switchPlayMode(playScreenMode);
+}
+
+function exitPlayScreen() {
+  stopCpSustain();
+  cpChords = [];
+  cpIndex = 0;
+  cpIsPlaying = false;
+  document.getElementById('bottomNav').style.display = '';
+  document.getElementById('header').style.display = '';
+  document.getElementById('playModeTabs').classList.remove('hidden');
+  showSong(currentSongId);
+}
+
+function switchPlayMode(mode) {
+  playScreenMode = mode;
+  document.getElementById('tabChordPlayer').classList.toggle('active', mode === 'chords');
+  document.getElementById('tabTeleprompter').classList.toggle('active', mode === 'teleprompter');
+  document.getElementById('chordPlayerPanel').style.display = mode === 'chords' ? 'block' : 'none';
+  document.getElementById('teleprompterPanel').style.display = mode === 'teleprompter' ? 'block' : 'none';
+  if (mode === 'chords') initChordPlayer();
+  else initTeleprompterPanel();
+}
+
+// --- Read-only render (shared) ---
+function renderReadonlyChordView(song) {
+  if (!song) return '';
+  return song.sections.map(sec => {
+    let lines = '';
+    if (sec._spacerChords && sec._spacerChords['__pre0']) {
+      const sc = sec._spacerChords['__pre0'];
+      if (sc.length) lines += renderPlayChordLine(sc, '');
+    }
+    sec.lines.forEach((ln, i) => {
+      const text = ln.text || '';
+      if (!text.trim() && (!ln.chords || !ln.chords.length)) return;
+      lines += renderPlayChordLine(ln.chords, text);
+      const spId = '__post' + i;
+      if (sec._spacerChords && sec._spacerChords[spId]) {
+        const sc = sec._spacerChords[spId];
+        if (sc.length) lines += renderPlayChordLine(sc, '');
+      }
+    });
+    return '<div class="play-section-block">' +
+      '<div class="play-section-label">' + esc(sec.label || sec.type) + '</div>' +
+      lines + '</div>';
+  }).join('');
+}
+
+function renderPlayChordLine(chords, text) {
+  let chordRow = '';
+  if (chords && chords.length) {
+    const sorted = [...chords].sort((a, b) => a.charIndex - b.charIndex);
+    const badges = sorted.map(ch => {
+      const left = ch.charIndex * 9.6;
+      return '<span class="play-badge" style="left:'+left+'px;background:'+getChordColor(ch.chord)+'">'+esc(ch.chord)+'</span>';
+    }).join('');
+    chordRow = '<div class="play-chord-row">' + badges + '</div>';
+  }
+  const textHTML = text ? esc(text) : '';
+  const textRow = textHTML ? '<div class="play-text-row">' + textHTML + '</div>' : '';
+  return '<div class="play-chord-line">' + chordRow + textRow + '</div>';
+}
+
+// --- Chord Player ---
+function initChordPlayer() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  cpChords = collectPlaybackChords();
+  cpIndex = 0;
+  cpIsPlaying = false;
+  stopCpSustain();
+  document.getElementById('cpTextArea').innerHTML = renderReadonlyChordView(song);
+  document.getElementById('playModeTabs').classList.remove('hidden');
+  document.getElementById('cpChordBlock').classList.remove('playing');
+  document.getElementById('cpTextArea').classList.remove('playing');
+  updateCpDisplay();
+  updateCpCta();
+  updateCpLayout();
+}
+
+function updateCpLayout() {
+  // Compute positions based on actual rendered heights
+  const tabs = document.getElementById('playModeTabs');
+  const block = document.getElementById('cpChordBlock');
+  const area = document.getElementById('cpTextArea');
+  const tabsHidden = tabs.classList.contains('hidden');
+  const topBarH = 48;
+  const tabsH = tabsHidden ? 0 : 44;
+  const blockTop = topBarH + tabsH;
+  block.style.top = blockTop + 'px';
+  const blockH = block.offsetHeight || 64;
+  const areaTop = blockTop + blockH;
+  area.style.top = areaTop + 'px';
+}
+
+function updateCpDisplay() {
+  const curEl = document.getElementById('cpCurrentChord');
+  const nextEl = document.getElementById('cpNextChord');
+  if (!cpIsPlaying || cpIndex === 0) {
+    curEl.textContent = '-';
+    curEl.style.background = '#4a4a6a';
+    if (cpChords.length) nextEl.textContent = 'next: ' + cpChords[0].chord;
+    else nextEl.textContent = '';
+  } else if (cpIndex > 0 && cpIndex <= cpChords.length) {
+    const cur = cpChords[cpIndex - 1];
+    curEl.textContent = cur.chord;
+    curEl.style.background = getChordColor(cur.chord);
+    if (cpIndex < cpChords.length) {
+      nextEl.textContent = 'next: ' + cpChords[cpIndex].chord;
+    } else {
+      nextEl.textContent = 'Ende';
+    }
+  }
+}
+
+function updateCpCta() {
+  const btn = document.getElementById('cpBottomCta');
+  if (!cpIsPlaying) {
+    btn.innerHTML = '&#9654; Starten';
+  } else if (cpIndex >= cpChords.length) {
+    btn.innerHTML = '&#10003; Ende \u2013 neu starten';
+  } else {
+    btn.innerHTML = 'N\u00e4chster Akkord \u2192';
+  }
+}
+
+function playNextPlayChord() {
+  if (!cpChords.length) return;
+
+  // Not playing yet -> start
+  if (!cpIsPlaying) {
+    cpIsPlaying = true;
+    cpIndex = 0;
+    // Hide tabs, shift layout up
+    document.getElementById('playModeTabs').classList.add('hidden');
+    document.getElementById('cpChordBlock').classList.add('playing');
+    document.getElementById('cpTextArea').classList.add('playing');
+    updateCpLayout();
+  }
+
+  // All done -> reset
+  if (cpIndex >= cpChords.length) {
+    cpIndex = 0;
+    cpIsPlaying = false;
+    stopCpSustain();
+    clearCurrentLine();
+    document.getElementById('playModeTabs').classList.remove('hidden');
+    document.getElementById('cpChordBlock').classList.remove('playing');
+    document.getElementById('cpTextArea').classList.remove('playing');
+    updateCpDisplay();
+    updateCpCta();
+    updateCpLayout();
+    return;
+  }
+
+  const entry = cpChords[cpIndex];
+  cpIndex++;
+  // Stop previous and play new sustained chord
+  stopCpSustain();
+  playSustainedChord(entry.chord);
+  updateCpDisplay();
+  updateCpCta();
+  highlightCurrentLine(cpIndex - 1);
+}
+
+function playSustainedChord(chordName) {
+  const ctx = getAudioCtx();
+  const freqs = getChordFrequencies(chordName);
+  if (!freqs.length) return;
+  const instrEl = document.getElementById('cpInstrumentSelect');
+  const instrument = instrEl ? instrEl.value : 'synth';
+  const now = ctx.currentTime;
+  const dur = 60; // long sustain, stopped manually on next chord
+  switch(instrument) {
+    case 'piano': playPiano(ctx, freqs, now, dur); break;
+    case 'guitar': playGuitar(ctx, freqs, now, dur); break;
+    case 'eguitar': playEGuitar(ctx, freqs, now, dur); break;
+    case 'xylophone': playXylophone(ctx, freqs, now, dur); break;
+    default: playSynth(ctx, freqs, now, dur);
+  }
+}
+
+function stopCpSustain() {
+  if (audioCtx && audioCtx.state === 'running') {
+    audioCtx.close().catch(() => {});
+    audioCtx = null;
+  }
+}
+
+function highlightCurrentLine(chordIdx) {
+  clearCurrentLine();
+  // Find the chord-line containing the chordIdx-th badge
+  const badges = document.querySelectorAll('#cpTextArea .play-badge');
+  if (chordIdx >= badges.length) return;
+  const badge = badges[chordIdx];
+  const line = badge.closest('.play-chord-line');
+  if (line) {
+    line.classList.add('current-line');
+    scrollToCurrentLine(line);
+  }
+}
+
+function clearCurrentLine() {
+  document.querySelectorAll('#cpTextArea .current-line').forEach(el => el.classList.remove('current-line'));
+}
+
+function scrollToCurrentLine(lineEl) {
+  const areaEl = document.getElementById('cpTextArea');
+  const targetTop = lineEl.offsetTop - areaEl.offsetTop - (areaEl.clientHeight * 0.15);
+  areaEl.scrollTo({ top: targetTop, behavior: 'smooth' });
+}
+
+// --- Teleprompter ---
+function initTeleprompterPanel() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  document.getElementById('tpReadonlyBody').innerHTML = renderReadonlyChordView(song);
+}
+
+function openTeleprompter() {
+  const song = getSong(currentSongId);
+  if (!song) return;
+  const overlay = document.getElementById('teleprompterOverlay');
+  document.getElementById('tpOverlayTitle').textContent = song.title;
+  document.getElementById('tpContent').innerHTML = renderReadonlyChordView(song);
+  overlay.style.setProperty('--tp-font-size', tpFontSizeVal + 'px');
+  overlay.classList.add('visible');
+  requestWakeLock();
+  try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); } catch {}
+}
+
+function closeTeleprompter() {
+  document.getElementById('teleprompterOverlay').classList.remove('visible');
+  releaseWakeLock();
+  try { document.fullscreenElement && document.exitFullscreen().catch(() => {}); } catch {}
+}
+
+function tpChangeFontSize(delta) {
+  tpFontSizeVal = Math.max(14, Math.min(32, tpFontSizeVal + delta));
+  document.getElementById('teleprompterOverlay').style.setProperty('--tp-font-size', tpFontSizeVal + 'px');
+}
+
+function tpScroll(dir) {
+  const el = document.getElementById('tpContent');
+  const amount = el.clientHeight * 0.8;
+  el.scrollBy({ top: dir * amount, behavior: 'smooth' });
+}
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+    }
+  } catch {}
+}
+
+function releaseWakeLock() {
+  if (wakeLockSentinel) {
+    wakeLockSentinel.release().catch(() => {});
+    wakeLockSentinel = null;
+  }
 }
 
 // ===============================================
