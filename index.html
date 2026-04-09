@@ -521,6 +521,13 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
   .chord-line-block.spacer-block.no-chords { display: none !important; }
   /* Spacer blocks WITH chords: show the print-chord-row, hide spacer-line */
   .chord-line-block.spacer-block { margin-bottom: 0; }
+  /* Prevent page-break between header and first section */
+  .print-header, .print-header h1, .print-header h2 {
+    page-break-after: avoid; break-after: avoid;
+  }
+  .chord-section-block, .chord-line-block {
+    page-break-before: avoid; break-before: avoid;
+  }
 }
 
 /* ===== LIGHT MODE ===== */
@@ -1913,7 +1920,6 @@ function updateAutocomplete() {
 function selectAutocomplete(chord) {
   document.getElementById('chordInput').value = chord;
   document.getElementById('popupChordTitle').textContent = chord;
-  document.getElementById('autocompleteList').innerHTML = '';
   renderChordDiagram(chord);
   highlightSelectedChord(chord);
   document.getElementById('chordOkBtn').disabled = false;
@@ -2050,7 +2056,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('popupChordTitle').textContent = v || 'Akkord';
     updateAutocomplete();
     renderChordDiagram(v);
-    const scrollArea = document.getElementById('chordPopupScroll');
+    document.getElementById('chordOkBtn').disabled = !v;
+    const scrollArea = document.getElementById('chordPopup');
     if (scrollArea) setTimeout(() => scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' }), 50);
   });
   input.addEventListener('keydown', (e) => {
