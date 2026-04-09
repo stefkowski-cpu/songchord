@@ -519,10 +519,12 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
   #header, #bottomNav, .add-section-btn, .tab-bar, .song-meta-fields,
   .song-title-input, .song-notes-field, .history-btn,
-  .transpose-row, .playback-row,
+  .transpose-row, .playback-row, .play-cta-btn,
   .sec-actions, .drag-handle, #chordPopup, #sectionTypePicker,
   .modal-overlay, .list-toolbar, #darkModeToggle, .credits,
-  .dot-row { display: none !important; }
+  .dot-row,
+  .cp-chord-block, .cp-bottom-cta, .play-mode-tabs, .play-top-bar,
+  #chordPlayerPanel, #teleprompterPanel, #prefsSheet { display: none !important; }
   .view { display: none !important; }
   #songView { display: block !important; padding: 20px !important; max-width: none !important; }
   #textEditTab { display: none !important; }
@@ -869,6 +871,70 @@ body.light-mode .tp-content .play-text-row { color: #1a1a2e; }
 @media print {
   #viewPlay, #teleprompterOverlay { display: none !important; }
 }
+
+/* ===== PREFERENCES SHEET ===== */
+#prefsSheet {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200;
+  background: #1a1a2e; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  transform: translateY(100%); transition: transform 0.25s ease;
+  visibility: hidden; padding: 0 12px 24px;
+}
+#prefsSheet.visible { transform: translateY(0); visibility: visible; }
+body.light-mode #prefsSheet { background: #f5f5f0; }
+.prefs-header {
+  position: sticky; top: 0; z-index: 1; background: #1a1a2e;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0 10px; border-bottom: 1px solid #2a2a4a;
+}
+body.light-mode .prefs-header { background: #f5f5f0; border-bottom-color: #ddd; }
+.prefs-header h3 { font-size: 18px; font-weight: 700; }
+body.light-mode .prefs-header h3 { color: #1a1a2e; }
+.prefs-done-btn {
+  background: #e94560; color: #fff; border: none; padding: 8px 18px;
+  border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.prefs-section-title {
+  font-size: 14px; font-weight: 700; color: #f0ece2; margin: 20px 0 12px;
+}
+body.light-mode .prefs-section-title { color: #1a1a2e; }
+.color-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.color-row-label {
+  width: 28px; font-size: 16px; font-weight: 700; font-family: 'Courier Prime', monospace;
+  color: #f0ece2; flex-shrink: 0;
+}
+body.light-mode .color-row-label { color: #1a1a2e; }
+.color-swatches { display: flex; gap: 6px; flex-shrink: 0; }
+.color-swatch {
+  width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: transform 0.1s;
+}
+.color-swatch:active { transform: scale(1.15); }
+.color-swatch.selected { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+body.light-mode .color-swatch.selected { border-color: #1a1a2e; box-shadow: 0 0 0 2px rgba(0,0,0,0.2); }
+.color-preview { display: flex; gap: 4px; flex-shrink: 0; }
+.color-preview-badge {
+  padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 12px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  white-space: nowrap; line-height: 18px;
+}
+.prefs-reset-btn {
+  background: none; border: 1px solid #4a4a6a; color: #7a7a9a;
+  padding: 10px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+  margin-top: 20px; display: block; width: 100%;
+}
+.prefs-reset-btn:active { border-color: #e94560; color: #f0ece2; }
+body.light-mode .prefs-reset-btn { border-color: #ccc; color: #999; }
+.settings-btn {
+  background: none; border: 1px solid #2a2a4a; color: #7a7a9a;
+  padding: 10px 16px; border-radius: 10px; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; margin-top: 16px; margin-bottom: 8px;
+}
+.settings-btn:active { border-color: #e94560; color: #f0ece2; }
+body.light-mode .settings-btn { border-color: #ddd; color: #999; }
 </style>
 </head>
 <body>
@@ -889,6 +955,7 @@ body.light-mode .tp-content .play-text-row { color: #1a1a2e; }
     <button class="toolbar-btn secondary" onclick="exportAllSongs()">&#11015; Backup</button>
   </div>
   <div id="songListContainer"></div>
+  <button class="settings-btn" onclick="openPrefsSheet()">&#9881; Einstellungen</button>
   <div class="credits">
     <p>songchord mega ist eine mithilfe von Claude Code entwickelte Web App f&uuml;r den privaten Gebrauch.</p>
     <p>Kontakt: rubichorn@proton.me</p>
@@ -1105,6 +1172,17 @@ body.light-mode .tp-content .play-text-row { color: #1a1a2e; }
   <div class="tp-tap-zone tp-tap-down" onclick="tpScroll(1)"></div>
 </div>
 
+<!-- PREFERENCES SHEET -->
+<div id="prefsSheet">
+  <div class="prefs-header">
+    <h3>Einstellungen</h3>
+    <button class="prefs-done-btn" onclick="closePrefsSheet()">&#10003; Fertig</button>
+  </div>
+  <div class="prefs-section-title">Akkord-Farben</div>
+  <div id="colorRowsContainer"></div>
+  <button class="prefs-reset-btn" onclick="resetChordColors()">Standardfarben wiederherstellen</button>
+</div>
+
 <script>
 // ===============================================
 // DATA
@@ -1264,14 +1342,72 @@ function getCurrentSongChords() {
 }
 
 // ===== CHORD COLORS =====
-const chordColors = {
-  'C':'#c0392b','D':'#d35400','E':'#b7950b','F':'#27ae60',
-  'G':'#16a085','A':'#2980b9','B':'#8e44ad','H':'#8e44ad'
+const DEFAULT_CHORD_COLORS = {
+  'C':'#c0392b','D':'#e67e22','E':'#d4ac0d','F':'#27ae60',
+  'G':'#1a8a8a','A':'#2980b9','B':'#8e44ad','H':'#8e44ad'
 };
+const COLOR_SWATCHES = ['#c0392b','#e67e22','#d4ac0d','#27ae60','#1a8a8a','#2980b9','#8e44ad','#7f8c8d'];
+const COLOR_ROOTS = ['C','D','E','F','G','A','B','H'];
+let chordColors = JSON.parse(localStorage.getItem('chordColors') || 'null') || {...DEFAULT_CHORD_COLORS};
+
+function saveChordColors() {
+  localStorage.setItem('chordColors', JSON.stringify(chordColors));
+}
 function getChordColor(chord) {
   if (!chord) return '#4a4a6a';
   const root = chord.charAt(0).toUpperCase();
   return chordColors[root] || '#4a4a6a';
+}
+function darkenColor(hex, amount) {
+  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  r = Math.max(0, r - amount); g = Math.max(0, g - amount); b = Math.max(0, b - amount);
+  return '#' + [r,g,b].map(c => c.toString(16).padStart(2,'0')).join('');
+}
+
+// ===== PREFERENCES =====
+function openPrefsSheet() {
+  renderColorRows();
+  document.getElementById('prefsSheet').classList.add('visible');
+}
+function closePrefsSheet() {
+  document.getElementById('prefsSheet').classList.remove('visible');
+}
+function renderColorRows() {
+  const container = document.getElementById('colorRowsContainer');
+  container.innerHTML = COLOR_ROOTS.map(root => {
+    const current = chordColors[root] || DEFAULT_CHORD_COLORS[root];
+    const swatches = COLOR_SWATCHES.map(col => {
+      const sel = col === current ? ' selected' : '';
+      return '<div class="color-swatch'+sel+'" style="background:'+col+'" onclick="pickChordColor(\''+root+'\',\''+col+'\')"></div>';
+    }).join('');
+    const base = current;
+    const mColor = darkenColor(base, 30);
+    const sColor = darkenColor(base, 15);
+    return '<div class="color-row">' +
+      '<span class="color-row-label">'+root+'</span>' +
+      '<div class="color-swatches">'+swatches+'</div>' +
+      '<div class="color-preview">' +
+        '<span class="color-preview-badge" style="background:'+base+'">'+root+'</span>' +
+        '<span class="color-preview-badge" style="background:'+mColor+'">'+root+'m</span>' +
+        '<span class="color-preview-badge" style="background:'+sColor+'">'+root+'7</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function pickChordColor(root, color) {
+  chordColors[root] = color;
+  if (root === 'B') chordColors['H'] = color;
+  if (root === 'H') chordColors['B'] = color;
+  saveChordColors();
+  renderColorRows();
+  // Re-render current chord tab if visible
+  if (currentTab === 'chords' && currentSongId) renderChordTab();
+}
+function resetChordColors() {
+  chordColors = {...DEFAULT_CHORD_COLORS};
+  saveChordColors();
+  renderColorRows();
+  if (currentTab === 'chords' && currentSongId) renderChordTab();
 }
 
 // ===== KEY DROPDOWN LIST =====
