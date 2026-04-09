@@ -464,6 +464,14 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
 .btn-secondary { background: #0f3460; color: #fff; }
 .btn-cancel { background: none; color: #7a7a9a; border: 1px solid #4a4a6a; }
 
+.import-valid-ok { border: 2px solid #00b894; }
+.import-valid-warn { border: 2px solid #fdcb6e; }
+.import-valid-error { border: 2px solid #e94560; }
+.import-valid-msg { font-size: 13px; line-height: 1.6; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; }
+.import-valid-msg.ok { background: rgba(0,184,148,0.15); color: #00b894; }
+.import-valid-msg.warn { background: rgba(253,203,110,0.15); color: #fdcb6e; }
+.import-valid-msg.error { background: rgba(233,69,96,0.15); color: #e94560; }
+
 .import-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 .import-option-btn {
   display: flex; align-items: center; gap: 12px; padding: 14px;
@@ -513,11 +521,6 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
 
 /* ===== PRINT ===== */
 .print-header { display: none; }
-.print-share-btn {
-  display: none; float: right; background: #e94560; color: #fff; border: none;
-  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
-  cursor: pointer;
-}
 @page { size: A4; margin: 15mm; }
 @media print {
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
@@ -532,7 +535,6 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
   #textEditTab { display: none !important; }
   #chordEditTab { display: block !important; }
   .print-header { display: block !important; margin-bottom: 20px; }
-  .print-share-btn { display: block !important; }
   .print-header h1 { font-size: 24px; margin-bottom: 4px; color: #000; }
   .print-header .print-meta { font-size: 14px; color: #666; }
   .print-header .print-notes { font-size: 12px; color: #444; margin-top: 4px; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
@@ -862,6 +864,15 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
       <button class="btn-primary" onclick="saveFolderEdit()">Speichern</button>
       <button class="btn-cancel" onclick="closeFolderEditModal()">Abbrechen</button>
     </div>
+  </div>
+</div>
+
+<!-- IMPORT VALIDATION MODAL -->
+<div class="modal-overlay" id="importValidModal">
+  <div class="modal-box" id="importValidBox">
+    <h3 id="importValidTitle">Import</h3>
+    <div id="importValidMessages" style="margin-bottom:12px"></div>
+    <div class="modal-actions" id="importValidActions"></div>
   </div>
 </div>
 
@@ -1273,8 +1284,7 @@ function printSong() {
   let meta = [];
   if (song.key) meta.push('Tonart: ' + song.key);
   if (song.bpm) meta.push(song.bpm + ' BPM');
-  ph.innerHTML = '<button class="print-share-btn" onclick="sharePDF()">Teilen / Speichern</button>' +
-    '<h1>' + esc(song.title) + '</h1>' +
+  ph.innerHTML = '<h1>' + esc(song.title) + '</h1>' +
     (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '') +
     (song.notes ? '<div class="print-notes">' + esc(song.notes) + '</div>' : '');
   setView('songView');
@@ -1286,15 +1296,6 @@ function printSong() {
   }, 150);
 }
 
-function sharePDF() {
-  if (!navigator.share) return;
-  const song = getSong(currentSongId);
-  if (!song) return;
-  navigator.share({
-    title: song.title,
-    text: 'songchord mega \u2013 ' + song.title
-  }).catch(function() {});
-}
 
 // Build a print-only chord row with positioned badges (no dots)
 function renderPrintChordRow(chords) {
@@ -2160,8 +2161,8 @@ function importTxtFile(event) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    createSongFromText(file.name.replace(/\.txt$/i,''), e.target.result);
     closeImportModal();
+    showImportValidation(file.name.replace(/\.txt$/i,''), e.target.result);
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -2171,7 +2172,84 @@ function importPastedText() {
   const text = document.getElementById('pasteTextarea').value.trim();
   if (!text) return;
   closePasteModal();
-  createSongFromText('Importierter Song', text);
+  showImportValidation('Importierter Song', text);
+}
+
+// ===== IMPORT VALIDATION =====
+let pendingImportTitle = null;
+let pendingImportText = null;
+
+function validateImportText(raw) {
+  const issues = [];
+  const warnings = [];
+  if (!raw.trim()) { issues.push('Text ist leer.'); return { issues, warnings }; }
+  if (raw.length > 50000) issues.push('Text zu lang: ' + raw.length + ' Zeichen (max. 50.000).');
+  const lines = raw.split('\n');
+  if (lines.length > 1000) issues.push('Zu viele Zeilen: ' + lines.length + ' (max. 1.000).');
+  const sectionHeaders = lines.filter(function(l) { return /^\[.+\]$/.test(l.trim()); });
+  if (sectionHeaders.length > 50) warnings.push('Viele Sektionen: ' + sectionHeaders.length + ' \u2013 App k\u00f6nnte langsam werden.');
+  if (sectionHeaders.length === 0) warnings.push('Keine Sektions-Header \u2013 gesamter Text wird als eine Sektion importiert.');
+  var unknownChords = new Set();
+  lines.forEach(function(line) {
+    if (/^\[.+\]$/.test(line.trim())) return;
+    var stripped = line.trim().replace(/\([^)]*\)/g, '').trim();
+    if (!stripped) return;
+    var tokens = stripped.split(/\s+/).filter(function(t) { return t; });
+    var chordTokens = tokens.filter(function(t) { return isValidChord(t); });
+    if (chordTokens.length > 0 && chordTokens.length < tokens.length && chordTokens.length >= tokens.length * 0.5) {
+      tokens.filter(function(t) { return !isValidChord(t) && !/^\(/.test(t); })
+        .forEach(function(t) { unknownChords.add(t); });
+    }
+  });
+  if (unknownChords.size > 0) warnings.push('Unbekannte Tokens auf Akkord-Zeilen: ' + [...unknownChords].slice(0, 8).join(', ') + ' \u2013 werden ignoriert.');
+  return { issues, warnings };
+}
+
+function showImportValidation(title, rawText) {
+  var result = validateImportText(rawText);
+  var box = document.getElementById('importValidBox');
+  var msgs = document.getElementById('importValidMessages');
+  var actions = document.getElementById('importValidActions');
+  var titleEl = document.getElementById('importValidTitle');
+
+  box.classList.remove('import-valid-ok', 'import-valid-warn', 'import-valid-error');
+
+  if (result.issues.length > 0) {
+    // Error — cannot import
+    box.classList.add('import-valid-error');
+    titleEl.textContent = 'Import nicht m\u00f6glich';
+    msgs.innerHTML = result.issues.map(function(m) { return '<div class="import-valid-msg error">\u2718 ' + esc(m) + '</div>'; }).join('');
+    actions.innerHTML = '<button class="btn-cancel" onclick="closeImportValidModal()">Abbrechen</button>';
+  } else if (result.warnings.length > 0) {
+    // Warnings — ask user
+    box.classList.add('import-valid-warn');
+    titleEl.textContent = 'Import mit Hinweisen';
+    msgs.innerHTML = result.warnings.map(function(m) { return '<div class="import-valid-msg warn">\u26A0 ' + esc(m) + '</div>'; }).join('');
+    pendingImportTitle = title;
+    pendingImportText = rawText;
+    actions.innerHTML = '<button class="btn-primary" onclick="confirmValidatedImport()">Trotzdem importieren</button>' +
+      '<button class="btn-cancel" onclick="closeImportValidModal()">Abbrechen</button>';
+  } else {
+    // All clear — import directly
+    createSongFromText(title, rawText);
+    return;
+  }
+  document.getElementById('importValidModal').classList.add('visible');
+}
+
+function confirmValidatedImport() {
+  closeImportValidModal();
+  if (pendingImportTitle !== null && pendingImportText !== null) {
+    createSongFromText(pendingImportTitle, pendingImportText);
+  }
+  pendingImportTitle = null;
+  pendingImportText = null;
+}
+
+function closeImportValidModal() {
+  document.getElementById('importValidModal').classList.remove('visible');
+  pendingImportTitle = null;
+  pendingImportText = null;
 }
 
 // Chord-over-lyrics parser
