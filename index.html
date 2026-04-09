@@ -102,6 +102,44 @@ input, textarea, select, button { font-family: inherit; }
 }
 .empty-state .big { font-size: 48px; margin-bottom: 12px; }
 
+/* ===== FOLDERS ===== */
+.folder-card {
+  background: #16213e; border-radius: 10px; margin-bottom: 10px;
+  border: 1px solid #2a2a4a; overflow: hidden;
+}
+.folder-header {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  cursor: pointer; user-select: none;
+}
+.folder-icon { font-size: 20px; flex-shrink: 0; }
+.folder-name { flex: 1; font-size: 15px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-count { font-size: 12px; color: #7a7a9a; flex-shrink: 0; }
+.folder-toggle { font-size: 12px; color: #7a7a9a; transition: transform 0.2s; flex-shrink: 0; }
+.folder-card.collapsed .folder-toggle { transform: rotate(-90deg); }
+.folder-card.collapsed .folder-body { display: none; }
+.folder-body { padding: 0 8px 8px; }
+.folder-body .song-card { margin-bottom: 6px; }
+.folder-actions { display: flex; gap: 2px; }
+.folder-actions button {
+  background: none; border: none; color: #7a7a9a; font-size: 14px;
+  cursor: pointer; padding: 4px 6px; border-radius: 6px;
+}
+.folder-actions button:active { background: rgba(255,255,255,0.1); }
+.section-label-sm { font-size: 12px; color: #7a7a9a; margin: 16px 0 6px; font-weight: 600; }
+.folder-color-picker { display: flex; gap: 8px; margin: 12px 0; }
+.folder-color-btn {
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: transform 0.1s;
+}
+.folder-color-btn.active { outline: 3px solid #f0ece2; outline-offset: 2px; transform: scale(1.2); }
+.move-folder-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; max-height: 300px; overflow-y: auto; }
+.move-folder-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 8px;
+  cursor: pointer; font-size: 14px;
+}
+.move-folder-item:active { border-color: #e94560; }
+
 /* ===== SONG META FIELDS ===== */
 .song-meta-fields {
   display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
@@ -271,6 +309,7 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
 .chord-section-body { padding: 12px; overflow-x: auto; }
 
 .chord-line-block { margin-bottom: 0; }
+.chord-line-spacer { height: 12px; }
 
 /* Dot row */
 .dot-row {
@@ -361,18 +400,6 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
 .autocomplete-item.selected-chord { background: #0f3460; outline: 1px solid #e94560; }
 .recent-label { font-size: 10px; color: #7a7a9a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* Editable header title */
-#headerTitle {
-  cursor: text; border-bottom: 1px solid transparent;
-  padding-bottom: 1px;
-}
-#headerTitle:hover { border-bottom-color: rgba(255,255,255,0.3); }
-#headerTitleInput {
-  background: none; border: none; border-bottom: 2px solid #e94560;
-  color: inherit; font-size: 18px; font-weight: 600;
-  font-family: inherit; outline: none; width: 100%;
-  padding: 0 0 1px 0;
-}
 
 #chordPopup input {
   width: 100%; background: #1a1a2e; border: 1px solid #4a4a6a;
@@ -492,6 +519,7 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
 
 /* ===== PRINT ===== */
 .print-header { display: none; }
+@page { size: A4; margin: 15mm; }
 @media print {
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
   #header, #bottomNav, .add-section-btn, .tab-bar, .song-meta-fields,
@@ -568,6 +596,9 @@ body.light-mode .chord-section-block {
 }
 body.light-mode .song-card .info .song-meta { color: #999; }
 body.light-mode .song-card .card-actions button { color: #999; }
+body.light-mode .folder-card { background: #fff; border-color: #ddd; }
+body.light-mode .folder-actions button { color: #999; }
+body.light-mode .move-folder-item { background: #fff; border-color: #ddd; }
 body.light-mode .song-meta-fields input {
   background: #fff; border-color: #ddd; color: #1a1a2e;
 }
@@ -675,7 +706,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
 
 <div id="header">
   <button class="back-btn" id="backBtn" onclick="navigateBack()">&#8592;</button>
-  <span class="title" id="headerTitle" onclick="startEditTitle()">songchord mega</span>
+  <span class="title" id="headerTitle">songchord mega</span>
   <div class="actions" id="headerActions"></div>
   <button id="darkModeToggle" onclick="toggleDarkMode()" style="background:none;border:none;color:#f0ece2;font-size:20px;cursor:pointer;padding:8px" title="Dark/Light Mode">&#9790;</button>
 </div>
@@ -684,6 +715,7 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
 <div class="view active" id="listView">
   <div class="list-toolbar">
     <button class="toolbar-btn" onclick="createNewSong()">+ Neuer Song</button>
+    <button class="toolbar-btn secondary" onclick="createFolder()">+ Ordner</button>
     <button class="toolbar-btn secondary" onclick="showImportModal()">+ Import</button>
     <button class="toolbar-btn secondary" onclick="exportAllSongs()">&#11015; Backup</button>
   </div>
@@ -724,6 +756,9 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
   </button>
   <button id="navPrint" onclick="printSong()" disabled>
     <span class="icon">&#128424;</span>Drucken
+  </button>
+  <button id="navPdf" onclick="printAsPDF()" disabled title="PDF speichern &rarr; Als PDF drucken &rarr; dann Teilen">
+    <span class="icon">&#128196;</span>PDF
   </button>
 </div>
 
@@ -821,6 +856,30 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
   </div>
 </div>
 
+<!-- FOLDER EDIT MODAL -->
+<div class="modal-overlay" id="folderEditModal">
+  <div class="modal-box">
+    <h3 id="folderEditTitle">Neuer Ordner</h3>
+    <input type="text" id="folderNameInput" placeholder="Ordnername" style="width:100%;background:#1a1a2e;border:1px solid #4a4a6a;color:#f0ece2;padding:10px;border-radius:6px;font-size:15px;margin-bottom:8px">
+    <div class="folder-color-picker" id="folderColorPicker"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveFolderEdit()">Speichern</button>
+      <button class="btn-cancel" onclick="closeFolderEditModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE TO FOLDER MODAL -->
+<div class="modal-overlay" id="moveFolderModal">
+  <div class="modal-box">
+    <h3>In Ordner verschieben</h3>
+    <div class="move-folder-list" id="moveFolderList"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeMoveFolderModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- HISTORY MODAL -->
 <div class="modal-overlay" id="historyModal">
   <div class="modal-box">
@@ -845,6 +904,124 @@ let editingChord = null;
 let conflictResolve = null;
 let deleteSongId = null;
 let autocompleteIdx = -1;
+
+// ===== FOLDERS =====
+const FOLDERS_KEY = 'chordsheet_folders';
+const FOLDER_STATE_KEY = 'chordsheet_folder_state';
+const FOLDER_COLORS = ['#e94560','#0f3460','#6c5ce7','#00b894','#fdcb6e'];
+let folders = [];
+let editingFolderId = null;
+let movingSongId = null;
+let selectedFolderColor = FOLDER_COLORS[0];
+
+function loadFolders() {
+  try { folders = JSON.parse(localStorage.getItem(FOLDERS_KEY)) || []; } catch { folders = []; }
+}
+function saveFolders() { localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders)); }
+function getFolderState() {
+  try { return JSON.parse(localStorage.getItem(FOLDER_STATE_KEY)) || {}; } catch { return {}; }
+}
+function setFolderState(id, collapsed) {
+  const state = getFolderState();
+  state[id] = collapsed;
+  localStorage.setItem(FOLDER_STATE_KEY, JSON.stringify(state));
+}
+
+function createFolder() {
+  editingFolderId = null;
+  document.getElementById('folderEditTitle').textContent = 'Neuer Ordner';
+  document.getElementById('folderNameInput').value = '';
+  selectedFolderColor = FOLDER_COLORS[0];
+  renderFolderColorPicker(selectedFolderColor);
+  document.getElementById('folderEditModal').classList.add('visible');
+  document.getElementById('folderNameInput').focus();
+}
+
+function editFolder(id) {
+  const f = folders.find(f => f.id === id);
+  if (!f) return;
+  editingFolderId = id;
+  document.getElementById('folderEditTitle').textContent = 'Ordner bearbeiten';
+  document.getElementById('folderNameInput').value = f.name;
+  selectedFolderColor = f.color || FOLDER_COLORS[0];
+  renderFolderColorPicker(selectedFolderColor);
+  document.getElementById('folderEditModal').classList.add('visible');
+  document.getElementById('folderNameInput').focus();
+}
+
+function renderFolderColorPicker(selected) {
+  const container = document.getElementById('folderColorPicker');
+  container.innerHTML = FOLDER_COLORS.map(c =>
+    '<button class="folder-color-btn' + (c === selected ? ' active' : '') + '" style="background:'+c+'" data-color="'+c+'"></button>'
+  ).join('');
+  container.onclick = function(e) {
+    const btn = e.target.closest('[data-color]');
+    if (!btn) return;
+    selectedFolderColor = btn.dataset.color;
+    container.querySelectorAll('[data-color]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  };
+}
+
+function saveFolderEdit() {
+  const name = document.getElementById('folderNameInput').value.trim();
+  if (!name) return;
+  const color = selectedFolderColor;
+  if (editingFolderId) {
+    const f = folders.find(f => f.id === editingFolderId);
+    if (f) { f.name = name; f.color = color; }
+  } else {
+    folders.push({ id: uid(), name, color });
+  }
+  saveFolders();
+  closeFolderEditModal();
+  renderSongList();
+}
+
+function closeFolderEditModal() {
+  document.getElementById('folderEditModal').classList.remove('visible');
+  editingFolderId = null;
+}
+
+function deleteFolder(id) {
+  folders = folders.filter(f => f.id !== id);
+  songs.forEach(s => { if (s.folderId === id) s.folderId = null; });
+  saveFolders();
+  saveSongs();
+  renderSongList();
+}
+
+function toggleFolder(id) {
+  const state = getFolderState();
+  const collapsed = !state[id];
+  setFolderState(id, collapsed);
+  const card = document.querySelector('.folder-card[data-folder-id="'+id+'"]');
+  if (card) card.classList.toggle('collapsed', collapsed);
+}
+
+function showMoveFolderModal(songId) {
+  movingSongId = songId;
+  const list = document.getElementById('moveFolderList');
+  let html = '<div class="move-folder-item" onclick="moveSongToFolder(null)"><span>&#10060;</span> Kein Ordner</div>';
+  folders.forEach(f => {
+    html += '<div class="move-folder-item" onclick="moveSongToFolder(\''+f.id+'\')">' +
+      '<span style="color:'+f.color+'">&#128193;</span> ' + esc(f.name) + '</div>';
+  });
+  list.innerHTML = html;
+  document.getElementById('moveFolderModal').classList.add('visible');
+}
+
+function closeMoveFolderModal() {
+  document.getElementById('moveFolderModal').classList.remove('visible');
+  movingSongId = null;
+}
+
+function moveSongToFolder(folderId) {
+  const song = songs.find(s => s.id === movingSongId);
+  if (song) { song.folderId = folderId || null; saveSongs(); }
+  closeMoveFolderModal();
+  renderSongList();
+}
 
 // ===== CHORD HISTORY (recent + frequency) =====
 let chordHistory = []; // array of { chord, count, lastUsed }
@@ -1076,6 +1253,7 @@ function showSong(id) {
     '<button onclick="duplicateSong(\''+id+'\')" title="Duplizieren">&#10697;</button>';
   document.getElementById('navSong').disabled = false;
   document.getElementById('navPrint').disabled = false;
+  document.getElementById('navPdf').disabled = false;
   setActiveNav('navSong');
   renderSongMeta();
   switchTab(currentTab);
@@ -1132,6 +1310,34 @@ function printSong() {
   }, 150);
 }
 
+async function printAsPDF() {
+  if (!currentSongId) showCurrentSong();
+  const song = getSong(currentSongId);
+  if (!song) return;
+  renderChordTab();
+  const ph = document.getElementById('printHeader');
+  let meta = [];
+  if (song.key) meta.push('Tonart: ' + song.key);
+  if (song.bpm) meta.push(song.bpm + ' BPM');
+  ph.innerHTML = '<h1>' + esc(song.title) + '</h1>' +
+    (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '') +
+    (song.notes ? '<div class="print-notes">' + esc(song.notes) + '</div>' : '');
+  setView('songView');
+  document.getElementById('textEditTab').style.display = 'none';
+  document.getElementById('chordEditTab').style.display = 'block';
+  await new Promise(r => setTimeout(r, 150));
+  window.print();
+  switchTab(currentTab);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: song.title,
+        text: 'songchord mega \u2013 ' + song.title,
+      });
+    } catch(e) {}
+  }
+}
+
 // Build a print-only chord row with positioned badges (no dots)
 function renderPrintChordRow(chords) {
   if (!chords || !chords.length) return '<div class="print-chord-row"></div>';
@@ -1168,25 +1374,57 @@ function initDarkMode() {
 // ===============================================
 // SONG LIST
 // ===============================================
+function renderSongCard(s) {
+  let meta = [];
+  if (s.key) meta.push(s.key);
+  if (s.bpm) meta.push(s.bpm+' BPM');
+  meta.push(new Date(s.createdAt).toLocaleDateString('de'));
+  return '<div class="song-card" onclick="showSong(\''+s.id+'\')">' +
+    '<div class="info"><div class="song-title">'+esc(s.title)+'</div>' +
+    '<div class="song-meta">'+esc(meta.join(' \u00b7 '))+'</div></div>' +
+    '<div class="card-actions">' +
+    '<button onclick="event.stopPropagation();showMoveFolderModal(\''+s.id+'\')" title="In Ordner verschieben">&#128193;</button>' +
+    '<button onclick="event.stopPropagation();exportSong(\''+s.id+'\')" title="Export">&#11015;</button>' +
+    '<button onclick="event.stopPropagation();askDeleteSong(\''+s.id+'\')" title="L\u00f6schen">&#10005;</button>' +
+    '</div></div>';
+}
+
 function renderSongList() {
   const c = document.getElementById('songListContainer');
-  if (!songs.length) {
+  if (!songs.length && !folders.length) {
     c.innerHTML = '<div class="empty-state"><div class="big">&#9835;</div>Noch keine Songs.<br>Erstelle einen neuen oder importiere Text.</div>';
     return;
   }
-  c.innerHTML = songs.map(s => {
-    let meta = [];
-    if (s.key) meta.push(s.key);
-    if (s.bpm) meta.push(s.bpm+' BPM');
-    meta.push(new Date(s.createdAt).toLocaleDateString('de'));
-    return '<div class="song-card" onclick="showSong(\''+s.id+'\')">' +
-      '<div class="info"><div class="song-title">'+esc(s.title)+'</div>' +
-      '<div class="song-meta">'+esc(meta.join(' \u00b7 '))+'</div></div>' +
-      '<div class="card-actions">' +
-      '<button onclick="event.stopPropagation();exportSong(\''+s.id+'\')" title="Export">&#11015;</button>' +
-      '<button onclick="event.stopPropagation();askDeleteSong(\''+s.id+'\')" title="L\u00f6schen">&#10005;</button>' +
-      '</div></div>';
-  }).join('');
+  const folderState = getFolderState();
+  let html = '';
+
+  // Render folders
+  folders.forEach(f => {
+    const folderSongs = songs.filter(s => s.folderId === f.id);
+    const collapsed = !!folderState[f.id];
+    html += '<div class="folder-card' + (collapsed ? ' collapsed' : '') + '" data-folder-id="'+f.id+'">' +
+      '<div class="folder-header" onclick="toggleFolder(\''+f.id+'\')">' +
+      '<span class="folder-icon" style="color:'+f.color+'">&#128193;</span>' +
+      '<span class="folder-name">'+esc(f.name)+'</span>' +
+      '<span class="folder-count">'+folderSongs.length+'</span>' +
+      '<span class="folder-toggle">&#9660;</span>' +
+      '<span class="folder-actions" onclick="event.stopPropagation()">' +
+      '<button onclick="editFolder(\''+f.id+'\')" title="Bearbeiten">&#9998;</button>' +
+      '<button onclick="deleteFolder(\''+f.id+'\')" title="L\u00f6schen">&#10005;</button>' +
+      '</span>' +
+      '</div>' +
+      '<div class="folder-body">' + folderSongs.map(renderSongCard).join('') + '</div>' +
+      '</div>';
+  });
+
+  // Songs without folder
+  const loose = songs.filter(s => !s.folderId || !folders.find(f => f.id === s.folderId));
+  if (loose.length) {
+    if (folders.length) html += '<div class="section-label-sm">Weitere Songs</div>';
+    html += loose.map(renderSongCard).join('');
+  }
+
+  c.innerHTML = html;
 }
 
 // ===============================================
@@ -1254,7 +1492,7 @@ function askDeleteSong(id) {
 }
 function confirmDeleteSong() {
   songs = songs.filter(s => s.id !== deleteSongId);
-  if (currentSongId === deleteSongId) { currentSongId = null; document.getElementById('navSong').disabled = true; document.getElementById('navPrint').disabled = true; }
+  if (currentSongId === deleteSongId) { currentSongId = null; document.getElementById('navSong').disabled = true; document.getElementById('navPrint').disabled = true; document.getElementById('navPdf').disabled = true; }
   saveSongs(); closeDeleteModal(); showSongList();
 }
 function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('visible'); deleteSongId = null; }
@@ -1273,10 +1511,10 @@ function renderSongMeta() {
     titleEl.id = 'songTitleInput';
     titleEl.className = 'song-title-input';
     titleEl.placeholder = 'Songtitel';
-    titleEl.onchange = function() {
+    titleEl.oninput = function() {
       const val = this.value.trim() || 'Ohne Titel';
-      this.value = val;
-      updateField('title', val);
+      const song = getSong(currentSongId);
+      if (song) { song.title = val; saveSongs(); }
       document.getElementById('headerTitle').textContent = val;
       renderSongList();
     };
@@ -1387,40 +1625,6 @@ function changeKey(newKey) {
   if (currentTab === 'chords') renderChordTab();
 }
 
-// ===== Editable Title (click on header) =====
-function startEditTitle() {
-  if (!currentSongId) return; // only edit when a song is open
-  const song = getSong(currentSongId);
-  if (!song) return;
-  const titleEl = document.getElementById('headerTitle');
-  const input = document.createElement('input');
-  input.id = 'headerTitleInput';
-  input.value = song.title;
-  titleEl.replaceWith(input);
-  input.focus();
-  input.select();
-
-  function finishEdit() {
-    const val = input.value.trim() || 'Ohne Titel';
-    updateField('title', val);
-    const span = document.createElement('span');
-    span.className = 'title';
-    span.id = 'headerTitle';
-    span.textContent = val;
-    span.onclick = startEditTitle;
-    input.replaceWith(span);
-    // Sync title input field and song list
-    const titleInput = document.getElementById('songTitleInput');
-    if (titleInput) titleInput.value = val;
-    renderSongList();
-  }
-
-  input.addEventListener('blur', finishEdit);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-    if (e.key === 'Escape') { input.value = song.title; input.blur(); }
-  });
-}
 
 // ===============================================
 // TEXT TAB: Single textarea + line list with section assignment
@@ -1698,9 +1902,13 @@ function renderSpacerLine(secId, spacerId) {
 }
 
 function renderChordLineWithDots(secId, ln) {
+  const text = ln.text || '';
+  // Empty line with no chords: just a small spacer, no dots
+  if (!text.trim() && (!ln.chords || !ln.chords.length)) {
+    return '<div class="chord-line-spacer"></div>';
+  }
   const dotRowHTML = renderDotRow(secId, ln);
   const printRow = renderPrintChordRow(ln.chords);
-  const text = ln.text || '';
   const textHTML = text ? esc(text) : '&nbsp;';
   return '<div class="chord-line-block">' +
     dotRowHTML + printRow +
@@ -1709,7 +1917,10 @@ function renderChordLineWithDots(secId, ln) {
 
 function renderDotRow(secId, ln) {
   const text = ln.text || ' ';
-  const len = Math.max(text.length, 1);
+  const chordEnd = ln.chords.length
+    ? Math.max(...ln.chords.map(c => c.charIndex + c.chord.length + 4))
+    : 0;
+  const len = Math.max(text.length, chordEnd, 1);
   const chordMap = {};
   ln.chords.forEach(ch => { chordMap[ch.charIndex] = ch; });
 
@@ -3160,6 +3371,7 @@ function stopPlayback() {
 // INIT
 // ===============================================
 loadSongs();
+loadFolders();
 loadChordHistory();
 initDarkMode();
 renderSongList();
