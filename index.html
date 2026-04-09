@@ -126,12 +126,6 @@ input, textarea, select, button { font-family: inherit; }
 }
 .folder-actions button:active { background: rgba(255,255,255,0.1); }
 .section-label-sm { font-size: 12px; color: #7a7a9a; margin: 16px 0 6px; font-weight: 600; }
-.folder-color-picker { display: flex; gap: 8px; margin: 12px 0; }
-.folder-color-btn {
-  width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent;
-  cursor: pointer; transition: transform 0.1s;
-}
-.folder-color-btn.active { outline: 3px solid #f0ece2; outline-offset: 2px; transform: scale(1.2); }
 .move-folder-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; max-height: 300px; overflow-y: auto; }
 .move-folder-item {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;
@@ -519,6 +513,11 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
 
 /* ===== PRINT ===== */
 .print-header { display: none; }
+.print-share-btn {
+  display: none; float: right; background: #e94560; color: #fff; border: none;
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
 @page { size: A4; margin: 15mm; }
 @media print {
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
@@ -533,6 +532,7 @@ body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
   #textEditTab { display: none !important; }
   #chordEditTab { display: block !important; }
   .print-header { display: block !important; margin-bottom: 20px; }
+  .print-share-btn { display: block !important; }
   .print-header h1 { font-size: 24px; margin-bottom: 4px; color: #000; }
   .print-header .print-meta { font-size: 14px; color: #666; }
   .print-header .print-notes { font-size: 12px; color: #444; margin-top: 4px; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
@@ -757,9 +757,6 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
   <button id="navPrint" onclick="printSong()" disabled>
     <span class="icon">&#128424;</span>Drucken
   </button>
-  <button id="navPdf" onclick="printAsPDF()" disabled title="PDF speichern &rarr; Als PDF drucken &rarr; dann Teilen">
-    <span class="icon">&#128196;</span>PDF
-  </button>
 </div>
 
 <!-- CHORD PICKER (Top-Sheet) -->
@@ -861,7 +858,6 @@ body.light-mode .instrument-select { background: #fff; border-color: #ddd; color
   <div class="modal-box">
     <h3 id="folderEditTitle">Neuer Ordner</h3>
     <input type="text" id="folderNameInput" placeholder="Ordnername" style="width:100%;background:#1a1a2e;border:1px solid #4a4a6a;color:#f0ece2;padding:10px;border-radius:6px;font-size:15px;margin-bottom:8px">
-    <div class="folder-color-picker" id="folderColorPicker"></div>
     <div class="modal-actions">
       <button class="btn-primary" onclick="saveFolderEdit()">Speichern</button>
       <button class="btn-cancel" onclick="closeFolderEditModal()">Abbrechen</button>
@@ -908,11 +904,10 @@ let autocompleteIdx = -1;
 // ===== FOLDERS =====
 const FOLDERS_KEY = 'chordsheet_folders';
 const FOLDER_STATE_KEY = 'chordsheet_folder_state';
-const FOLDER_COLORS = ['#e94560','#0f3460','#6c5ce7','#00b894','#fdcb6e'];
+const FOLDER_DEFAULT_COLOR = '#0f3460';
 let folders = [];
 let editingFolderId = null;
 let movingSongId = null;
-let selectedFolderColor = FOLDER_COLORS[0];
 
 function loadFolders() {
   try { folders = JSON.parse(localStorage.getItem(FOLDERS_KEY)) || []; } catch { folders = []; }
@@ -931,8 +926,6 @@ function createFolder() {
   editingFolderId = null;
   document.getElementById('folderEditTitle').textContent = 'Neuer Ordner';
   document.getElementById('folderNameInput').value = '';
-  selectedFolderColor = FOLDER_COLORS[0];
-  renderFolderColorPicker(selectedFolderColor);
   document.getElementById('folderEditModal').classList.add('visible');
   document.getElementById('folderNameInput').focus();
 }
@@ -943,35 +936,18 @@ function editFolder(id) {
   editingFolderId = id;
   document.getElementById('folderEditTitle').textContent = 'Ordner bearbeiten';
   document.getElementById('folderNameInput').value = f.name;
-  selectedFolderColor = f.color || FOLDER_COLORS[0];
-  renderFolderColorPicker(selectedFolderColor);
   document.getElementById('folderEditModal').classList.add('visible');
   document.getElementById('folderNameInput').focus();
-}
-
-function renderFolderColorPicker(selected) {
-  const container = document.getElementById('folderColorPicker');
-  container.innerHTML = FOLDER_COLORS.map(c =>
-    '<button class="folder-color-btn' + (c === selected ? ' active' : '') + '" style="background:'+c+'" data-color="'+c+'"></button>'
-  ).join('');
-  container.onclick = function(e) {
-    const btn = e.target.closest('[data-color]');
-    if (!btn) return;
-    selectedFolderColor = btn.dataset.color;
-    container.querySelectorAll('[data-color]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  };
 }
 
 function saveFolderEdit() {
   const name = document.getElementById('folderNameInput').value.trim();
   if (!name) return;
-  const color = selectedFolderColor;
   if (editingFolderId) {
     const f = folders.find(f => f.id === editingFolderId);
-    if (f) { f.name = name; f.color = color; }
+    if (f) f.name = name;
   } else {
-    folders.push({ id: uid(), name, color });
+    folders.push({ id: uid(), name, color: FOLDER_DEFAULT_COLOR });
   }
   saveFolders();
   closeFolderEditModal();
@@ -1005,7 +981,7 @@ function showMoveFolderModal(songId) {
   let html = '<div class="move-folder-item" onclick="moveSongToFolder(null)"><span>&#10060;</span> Kein Ordner</div>';
   folders.forEach(f => {
     html += '<div class="move-folder-item" onclick="moveSongToFolder(\''+f.id+'\')">' +
-      '<span style="color:'+f.color+'">&#128193;</span> ' + esc(f.name) + '</div>';
+      '<span style="color:'+FOLDER_DEFAULT_COLOR+'">&#128193;</span> ' + esc(f.name) + '</div>';
   });
   list.innerHTML = html;
   document.getElementById('moveFolderModal').classList.add('visible');
@@ -1253,7 +1229,6 @@ function showSong(id) {
     '<button onclick="duplicateSong(\''+id+'\')" title="Duplizieren">&#10697;</button>';
   document.getElementById('navSong').disabled = false;
   document.getElementById('navPrint').disabled = false;
-  document.getElementById('navPdf').disabled = false;
   setActiveNav('navSong');
   renderSongMeta();
   switchTab(currentTab);
@@ -1298,7 +1273,8 @@ function printSong() {
   let meta = [];
   if (song.key) meta.push('Tonart: ' + song.key);
   if (song.bpm) meta.push(song.bpm + ' BPM');
-  ph.innerHTML = '<h1>' + esc(song.title) + '</h1>' +
+  ph.innerHTML = '<button class="print-share-btn" onclick="sharePDF()">Teilen / Speichern</button>' +
+    '<h1>' + esc(song.title) + '</h1>' +
     (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '') +
     (song.notes ? '<div class="print-notes">' + esc(song.notes) + '</div>' : '');
   setView('songView');
@@ -1310,32 +1286,14 @@ function printSong() {
   }, 150);
 }
 
-async function printAsPDF() {
-  if (!currentSongId) showCurrentSong();
+function sharePDF() {
+  if (!navigator.share) return;
   const song = getSong(currentSongId);
   if (!song) return;
-  renderChordTab();
-  const ph = document.getElementById('printHeader');
-  let meta = [];
-  if (song.key) meta.push('Tonart: ' + song.key);
-  if (song.bpm) meta.push(song.bpm + ' BPM');
-  ph.innerHTML = '<h1>' + esc(song.title) + '</h1>' +
-    (meta.length ? '<div class="print-meta">' + esc(meta.join(' \u00b7 ')) + '</div>' : '') +
-    (song.notes ? '<div class="print-notes">' + esc(song.notes) + '</div>' : '');
-  setView('songView');
-  document.getElementById('textEditTab').style.display = 'none';
-  document.getElementById('chordEditTab').style.display = 'block';
-  await new Promise(r => setTimeout(r, 150));
-  window.print();
-  switchTab(currentTab);
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: song.title,
-        text: 'songchord mega \u2013 ' + song.title,
-      });
-    } catch(e) {}
-  }
+  navigator.share({
+    title: song.title,
+    text: 'songchord mega \u2013 ' + song.title
+  }).catch(function() {});
 }
 
 // Build a print-only chord row with positioned badges (no dots)
@@ -1404,7 +1362,7 @@ function renderSongList() {
     const collapsed = !!folderState[f.id];
     html += '<div class="folder-card' + (collapsed ? ' collapsed' : '') + '" data-folder-id="'+f.id+'">' +
       '<div class="folder-header" onclick="toggleFolder(\''+f.id+'\')">' +
-      '<span class="folder-icon" style="color:'+f.color+'">&#128193;</span>' +
+      '<span class="folder-icon" style="color:'+FOLDER_DEFAULT_COLOR+'">&#128193;</span>' +
       '<span class="folder-name">'+esc(f.name)+'</span>' +
       '<span class="folder-count">'+folderSongs.length+'</span>' +
       '<span class="folder-toggle">&#9660;</span>' +
@@ -1492,7 +1450,7 @@ function askDeleteSong(id) {
 }
 function confirmDeleteSong() {
   songs = songs.filter(s => s.id !== deleteSongId);
-  if (currentSongId === deleteSongId) { currentSongId = null; document.getElementById('navSong').disabled = true; document.getElementById('navPrint').disabled = true; document.getElementById('navPdf').disabled = true; }
+  if (currentSongId === deleteSongId) { currentSongId = null; document.getElementById('navSong').disabled = true; document.getElementById('navPrint').disabled = true; }
   saveSongs(); closeDeleteModal(); showSongList();
 }
 function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('visible'); deleteSongId = null; }
