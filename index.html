@@ -869,8 +869,222 @@ body.light-mode .tp-content .play-text-row { color: #1a1a2e; }
 }
 
 @media print {
-  #viewPlay, #teleprompterOverlay { display: none !important; }
+  #viewPlay, #teleprompterOverlay, #viewJam { display: none !important; }
 }
+
+/* ===== JAM BOARD ===== */
+#viewJam { padding: 0; display: flex; flex-direction: column; height: 100vh; }
+#viewJam.active { display: flex; }
+.jam-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  height: 48px; background: #16213e; border-bottom: 1px solid #2a2a4a;
+}
+body.light-mode .jam-header { background: #fff; border-bottom-color: #ddd; }
+.jam-header .jam-back-btn {
+  background: none; border: none; color: #f0ece2; font-size: 20px; cursor: pointer; padding: 6px;
+}
+body.light-mode .jam-header .jam-back-btn { color: #1a1a2e; }
+.jam-header .jam-title {
+  font-size: 16px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+}
+body.light-mode .jam-header .jam-title { color: #1a1a2e; }
+.jam-header .jam-spacer { flex: 1; }
+.jam-header select {
+  background: #1a1a2e; border: 1px solid #2a2a4a; color: #f0ece2;
+  padding: 6px 8px; border-radius: 6px; font-size: 12px;
+}
+body.light-mode .jam-header select { background: #f5f5f0; border-color: #ddd; color: #1a1a2e; }
+
+.jam-body {
+  position: fixed; top: 48px; bottom: 60px; left: 0; right: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 10px 12px;
+  display: flex; flex-direction: column;
+}
+
+/* Key matrix */
+.jam-key-matrix { margin-bottom: 10px; }
+.jam-key-row { display: flex; gap: 3px; margin-bottom: 3px; flex-wrap: wrap; }
+.jam-key-label {
+  font-size: 10px; color: #4a4a6a; width: 32px; flex-shrink: 0;
+  display: flex; align-items: center;
+}
+body.light-mode .jam-key-label { color: #999; }
+.jam-key-pill {
+  font-size: 11px; padding: 3px 7px; border-radius: 10px; border: none;
+  background: #16213e; color: #7a7a9a; cursor: pointer;
+  font-family: 'Courier Prime', monospace; font-weight: 600;
+  white-space: nowrap; transition: background 0.15s;
+}
+.jam-key-pill.active { background: #e94560; color: #fff; }
+body.light-mode .jam-key-pill { background: #e8e8e8; color: #999; }
+body.light-mode .jam-key-pill.active { background: #e94560; color: #fff; }
+
+/* History */
+.jam-history-bar {
+  display: flex; gap: 4px; align-items: center; padding: 4px 0 8px; min-height: 30px;
+}
+.jam-hist-btn {
+  background: none; border: 1px solid #2a2a4a; color: #7a7a9a;
+  width: 28px; height: 28px; border-radius: 6px; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.jam-hist-btn:active { border-color: #e94560; color: #f0ece2; }
+body.light-mode .jam-hist-btn { border-color: #ddd; color: #999; }
+.jam-history-scroll {
+  display: flex; gap: 4px; overflow-x: auto; flex: 1;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; align-items: center;
+}
+.jam-history-scroll::-webkit-scrollbar { display: none; }
+.jam-history-badge {
+  padding: 3px 8px; border-radius: 4px; color: #fff; font-size: 11px;
+  font-weight: 700; font-family: 'Courier Prime', monospace;
+  white-space: nowrap; flex-shrink: 0; opacity: 0.7;
+}
+.jam-history-badge:last-child { opacity: 1; }
+.jam-history-empty { font-size: 11px; color: #4a4a6a; font-style: italic; }
+
+/* Key chord blocks */
+.jam-key-block { margin-bottom: 14px; }
+.jam-key-block-label {
+  font-size: 11px; color: #7a7a9a; font-weight: 700; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+body.light-mode .jam-key-block-label { color: #999; }
+
+.jam-chord-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 4px;
+}
+@media (orientation: landscape) {
+  .jam-chord-grid { grid-template-columns: repeat(7, 1fr); }
+}
+.jam-chord-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 64px; border-radius: 10px; border: none;
+  cursor: pointer; color: #fff; position: relative;
+  transition: box-shadow 0.2s, transform 0.2s, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.jam-chord-btn.jam-active { box-shadow: 0 0 0 3px #fff; transform: scale(0.97); }
+.jam-chord-btn.jam-strong { box-shadow: 0 0 0 3px #22c55e; transform: scale(1.04); }
+.jam-chord-btn.jam-medium { box-shadow: 0 0 0 3px #eab308; }
+.jam-chord-btn.jam-weak { box-shadow: 0 0 0 2px #f97316; opacity: 0.65; }
+.jam-chord-btn.jam-neutral { opacity: 0.3; }
+.jam-chord-btn.jam-pivot::after {
+  content: ''; position: absolute; top: 5px; right: 5px;
+  width: 6px; height: 6px; border-radius: 50%; background: #fff;
+}
+.jam-chord-numeral { font-size: 11px; opacity: 0.6; font-weight: 600; margin-bottom: 1px; }
+.jam-chord-name { font-size: 20px; font-weight: 700; font-family: 'Courier Prime', monospace; }
+
+/* Borrowed row */
+.jam-borrow-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 4px;
+}
+.jam-borrow-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 44px; border-radius: 8px; border: none;
+  cursor: pointer; color: #fff; opacity: 0.65; position: relative;
+  transition: box-shadow 0.2s, transform 0.2s, opacity 0.2s, filter 0.2s;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.jam-borrow-btn.jam-active { box-shadow: 0 0 0 3px #fff; transform: scale(0.97); opacity: 1; }
+.jam-borrow-btn.jam-strong { box-shadow: 0 0 0 3px #22c55e; transform: scale(1.04); opacity: 1; }
+.jam-borrow-btn.jam-medium { box-shadow: 0 0 0 3px #eab308; opacity: 0.85; }
+.jam-borrow-btn.jam-weak { box-shadow: 0 0 0 2px #f97316; }
+.jam-borrow-btn.jam-neutral { opacity: 0.25; }
+.jam-borrow-btn.jam-pivot::after {
+  content: ''; position: absolute; top: 4px; right: 4px;
+  width: 5px; height: 5px; border-radius: 50%; background: #fff;
+}
+.jam-borrow-label { font-size: 9px; opacity: 0.5; }
+.jam-borrow-name { font-size: 14px; font-weight: 700; font-family: 'Courier Prime', monospace; }
+
+/* Legend */
+.jam-legend {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; font-size: 10px; color: #7a7a9a;
+}
+body.light-mode .jam-legend { color: #999; }
+.jam-legend span { display: flex; align-items: center; gap: 3px; }
+.jam-legend-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+
+/* Duration row */
+.jam-duration-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.jam-dur-toggle {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid #2a2a4a;
+  background: none; color: #7a7a9a; font-size: 12px; font-weight: 600;
+  cursor: pointer;
+}
+.jam-dur-toggle.active { background: #e94560; color: #fff; border-color: #e94560; }
+.jam-dur-time {
+  padding: 4px 7px; border-radius: 6px; border: 1px solid #2a2a4a;
+  background: none; color: #7a7a9a; font-size: 11px; cursor: pointer;
+}
+.jam-dur-time.active { background: #0f3460; color: #fff; border-color: #0f3460; }
+body.light-mode .jam-dur-toggle { border-color: #ddd; color: #999; }
+body.light-mode .jam-dur-toggle.active { background: #e94560; color: #fff; border-color: #e94560; }
+body.light-mode .jam-dur-time { border-color: #ddd; color: #999; }
+body.light-mode .jam-dur-time.active { background: #d5e8f0; color: #1a1a2e; border-color: #d5e8f0; }
+
+.jam-song-cta {
+  background: none; border: 1px solid #2a2a4a; color: #7a7a9a;
+  padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; margin-bottom: 10px;
+}
+.jam-song-cta:active { border-color: #e94560; color: #f0ece2; }
+body.light-mode .jam-song-cta { border-color: #ddd; color: #999; }
+
+/* Jam text overlay */
+.jam-text-overlay {
+  position: fixed; bottom: 60px; left: 0; right: 0;
+  background: rgba(26,26,46,0.93); border-top: 1px solid #2a2a4a;
+  padding: 10px 12px; max-height: 28vh; overflow: hidden; z-index: 50;
+  display: none;
+}
+.jam-text-overlay.visible { display: block; }
+body.light-mode .jam-text-overlay { background: rgba(245,245,240,0.95); border-top-color: #ddd; }
+.jam-overlay-close {
+  position: absolute; top: 6px; right: 8px; background: none; border: none;
+  color: #7a7a9a; font-size: 18px; cursor: pointer; padding: 4px; z-index: 1;
+}
+.jam-overlay-line {
+  font-family: 'Courier Prime', monospace; font-size: 14px;
+  margin-bottom: 4px; position: relative; min-height: 18px;
+}
+.jam-overlay-chords {
+  position: relative; height: 22px; font-family: 'Courier Prime', monospace;
+  font-size: 12px; font-weight: 700; white-space: pre; user-select: none; overflow: visible;
+}
+.jam-overlay-chords .jam-o-badge {
+  position: absolute; bottom: 0; padding: 1px 5px; border-radius: 4px;
+  color: #fff; font-size: 11px; font-weight: 700;
+  font-family: 'Courier Prime', monospace; white-space: nowrap; line-height: 16px;
+  transition: filter 0.2s;
+}
+.jam-o-badge.jam-badge-flash { filter: brightness(1.8); }
+.jam-overlay-text {
+  font-family: 'Courier Prime', monospace; font-size: 14px;
+  white-space: pre; color: #f0ece2; line-height: 20px;
+}
+body.light-mode .jam-overlay-text { color: #1a1a2e; }
+.jam-overlay-line.dim { opacity: 0.4; }
+
+/* Jam song picker modal */
+.jam-song-list { max-height: 400px; overflow-y: auto; }
+.jam-song-item {
+  padding: 12px; border-bottom: 1px solid #2a2a4a; cursor: pointer;
+  font-size: 15px;
+}
+.jam-song-item:hover { background: rgba(255,255,255,0.05); }
+.jam-song-item:active { background: rgba(233,69,96,0.15); }
+body.light-mode .jam-song-item { border-bottom-color: #eee; }
+body.light-mode .jam-song-item:hover { background: rgba(0,0,0,0.03); }
 
 /* ===== PREFERENCES SHEET ===== */
 #prefsSheet {
@@ -957,7 +1171,8 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
   <div id="songListContainer"></div>
   <button class="settings-btn" onclick="openPrefsSheet()">&#9881; Einstellungen</button>
   <div class="credits">
-    <p>songchord mega ist eine mithilfe von Claude Code entwickelte Web App f&uuml;r den privaten Gebrauch.</p>
+    <p>songchord mega &ndash; eine Web App f&uuml;r den privaten Gebrauch, entwickelt mit Claude Code.</p>
+    <p>Alle importierten Inhalte verbleiben ausschlie&szlig;lich lokal auf deinem Ger&auml;t. F&uuml;r die Rechtm&auml;&szlig;igkeit importierter Texte und Akkorde ist der Nutzer selbst verantwortlich.</p>
     <p>Kontakt: rubichorn@proton.me</p>
   </div>
 </div>
@@ -992,6 +1207,9 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
   </button>
   <button id="navPrint" onclick="printSong()" disabled>
     <span class="icon">&#128424;</span>Drucken
+  </button>
+  <button id="navJam" onclick="showJamBoard()">
+    <span class="icon" style="font-style:normal">&#9836;</span>Jam
   </button>
 </div>
 
@@ -1170,6 +1388,55 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
   <div class="tp-content" id="tpContent"></div>
   <div class="tp-tap-zone tp-tap-up" onclick="tpScroll(-1)"></div>
   <div class="tp-tap-zone tp-tap-down" onclick="tpScroll(1)"></div>
+</div>
+
+<!-- VIEW: JAM BOARD -->
+<div class="view" id="viewJam">
+  <div class="jam-header">
+    <button class="jam-back-btn" onclick="exitJamBoard()">&#8592;</button>
+    <span class="jam-title">Jam Board</span>
+    <span class="jam-spacer"></span>
+    <select id="jamInstrumentSelect" onchange="localStorage.setItem('chordsheet_instrument',this.value)">
+      <option value="synth">Synth</option><option value="piano">Piano</option>
+      <option value="guitar">Gitarre</option><option value="eguitar">E-Gitarre</option>
+      <option value="xylophone">Xylophon</option>
+    </select>
+  </div>
+  <div class="jam-body" id="jamBody">
+    <div class="jam-key-matrix" id="jamKeyMatrix"></div>
+    <div class="jam-history-bar">
+      <button class="jam-hist-btn" onclick="jamUndo()" title="Undo">&#8617;</button>
+      <button class="jam-hist-btn" onclick="jamReset()" title="Reset">&#8634;</button>
+      <div class="jam-history-scroll" id="jamHistoryScroll">
+        <span class="jam-history-empty">Spiele einen Akkord...</span>
+      </div>
+    </div>
+    <div id="jamChordBlocks"></div>
+    <div class="jam-legend" id="jamLegend">
+      <span><span class="jam-legend-dot" style="background:#22c55e"></span>stark</span>
+      <span><span class="jam-legend-dot" style="background:#eab308"></span>gut</span>
+      <span><span class="jam-legend-dot" style="background:#f97316"></span>Ausweich</span>
+      <span><span class="jam-legend-dot" style="background:#4a4a6a"></span>neutral</span>
+      <span><span class="jam-legend-dot" style="background:#fff;border:1px solid #7a7a9a"></span>Pivot</span>
+    </div>
+    <div class="jam-duration-row" id="jamDurationRow"></div>
+    <button class="jam-song-cta" id="jamSongCtaBtn" onclick="openJamSongPicker()">&#9835; Song einblenden</button>
+  </div>
+  <div class="jam-text-overlay" id="jamTextOverlay">
+    <button class="jam-overlay-close" onclick="closeJamSongOverlay()">&times;</button>
+    <div id="jamOverlayContent"></div>
+  </div>
+</div>
+
+<!-- JAM SONG PICKER MODAL -->
+<div class="modal-overlay" id="jamSongPickerModal">
+  <div class="modal-box">
+    <h3>Song w&auml;hlen</h3>
+    <div class="jam-song-list" id="jamSongList"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeJamSongPicker()">Abbrechen</button>
+    </div>
+  </div>
 </div>
 
 <!-- PREFERENCES SHEET -->
@@ -1563,7 +1830,7 @@ function showSongList() {
   document.getElementById('headerActions').innerHTML = '';
   // Remove dynamically created song fields
   stopPlayback();
-  ['songTitleInput','songNotesField','historyBtn','transposeRow','playbackRow'].forEach(id => {
+  ['songTitleInput','songNotesField','historyBtn','transposeRow','playbackRow','playCtaBtn','jamCtaBtn'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.remove();
   });
@@ -1889,6 +2156,17 @@ function renderSongMeta() {
     playCta.innerHTML = '<span class="cta-icon">&#9654;</span> Play';
     playCta.onclick = function() { showPlayScreen(); };
     histBtn.after(playCta);
+  }
+  // Jam CTA button
+  let jamCta = document.getElementById('jamCtaBtn');
+  if (!jamCta) {
+    jamCta = document.createElement('button');
+    jamCta.id = 'jamCtaBtn';
+    jamCta.className = 'play-cta-btn';
+    jamCta.style.background = 'linear-gradient(135deg, #0f3460, #16213e)';
+    jamCta.innerHTML = '<span class="cta-icon">&#9836;</span> Jam mit diesem Song';
+    jamCta.onclick = function() { openJamWithSong(currentSongId); };
+    playCta.after(jamCta);
   }
 }
 function updateField(f, v) {
@@ -3963,6 +4241,451 @@ function releaseWakeLock() {
     wakeLockSentinel.release().catch(() => {});
     wakeLockSentinel = null;
   }
+}
+
+// ===============================================
+// JAM BOARD
+// ===============================================
+const MAJOR_INT = [0,2,4,5,7,9,11];
+const MINOR_INT = [0,2,3,5,7,8,10];
+const MAJOR_TYPES = ['','m','m','','','m','dim'];
+const MINOR_TYPES = ['m','dim','','m','m','',''];
+const ROMAN_NUMERALS = ['I','II','III','IV','V','VI','VII'];
+const JAM_DUR_KEY = 'chordsheet_jam_duration';
+const JAM_DUR_MODE_KEY = 'chordsheet_jam_dur_mode';
+const JAM_DURATIONS = [0.2, 0.5, 1, 1.5, 2, 3];
+const DUR_KEYS = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
+const MOLL_KEYS = ['Am','Em','Bm','F#m','C#m','G#m','D#m','Bbm','Fm','Cm','Gm','Dm'];
+
+const TRANSITIONS = {
+  0:{strong:[3,4,5],medium:[1,2],weak:[6]},
+  1:{strong:[4,5],medium:[0,3,5],weak:[2,6]},
+  2:{strong:[5,3],medium:[1,5],weak:[0,4,6]},
+  3:{strong:[4,0,1],medium:[5,2],weak:[6]},
+  4:{strong:[0,5],medium:[3,1],weak:[2,6]},
+  5:{strong:[1,3],medium:[0,4,2],weak:[6]},
+  6:{strong:[0],medium:[3,4],weak:[1,2,5]}
+};
+
+let jamActiveKeys = ['C']; // up to 4
+let jamDurMode = localStorage.getItem(JAM_DUR_MODE_KEY) || 'sustain';
+let jamDurValue = parseFloat(localStorage.getItem(JAM_DUR_KEY)) || 1;
+let jamHistoryList = []; // last 12 played chords
+let jamCurrentChord = null; // { name, keyIdx, key } of last played chord
+let jamSongId = null;
+let jamSongLines = [];
+let jamLineIndex = 0;
+
+function showJamBoard(presetKey, presetSongId) {
+  setView('viewJam');
+  document.getElementById('bottomNav').style.display = '';
+  document.getElementById('header').style.display = 'none';
+  setActiveNav('navJam');
+  if (presetKey) {
+    jamActiveKeys = [presetKey];
+  }
+  const saved = localStorage.getItem('chordsheet_instrument');
+  if (saved) document.getElementById('jamInstrumentSelect').value = saved;
+  renderJamKeyMatrix();
+  renderJamAllChords();
+  renderJamDurationRow();
+  renderJamHistory();
+  if (presetSongId) {
+    selectJamSong(presetSongId);
+  }
+}
+
+function openJamWithSong(songId) {
+  const song = getSong(songId);
+  const key = song && song.key ? song.key : 'C';
+  showJamBoard(key, songId);
+}
+
+function exitJamBoard() {
+  stopJamAudio();
+  closeJamSongOverlay();
+  document.getElementById('header').style.display = '';
+  showSongList();
+}
+
+// --- Key Matrix ---
+function renderJamKeyMatrix() {
+  const container = document.getElementById('jamKeyMatrix');
+  const durRow = DUR_KEYS.map(k => {
+    const act = jamActiveKeys.includes(k) ? ' active' : '';
+    return '<button class="jam-key-pill'+act+'" onclick="toggleJamKey(\''+k+'\')">'+k+'</button>';
+  }).join('');
+  const mollRow = MOLL_KEYS.map(k => {
+    const act = jamActiveKeys.includes(k) ? ' active' : '';
+    return '<button class="jam-key-pill'+act+'" onclick="toggleJamKey(\''+k+'\')">'+k+'</button>';
+  }).join('');
+  container.innerHTML =
+    '<div class="jam-key-row"><span class="jam-key-label">Dur</span>' + durRow + '</div>' +
+    '<div class="jam-key-row"><span class="jam-key-label">Moll</span>' + mollRow + '</div>';
+}
+
+function toggleJamKey(key) {
+  const idx = jamActiveKeys.indexOf(key);
+  if (idx >= 0) {
+    if (jamActiveKeys.length <= 1) return; // keep at least 1
+    jamActiveKeys.splice(idx, 1);
+  } else {
+    if (jamActiveKeys.length >= 4) jamActiveKeys.shift();
+    jamActiveKeys.push(key);
+  }
+  renderJamKeyMatrix();
+  renderJamAllChords();
+}
+
+// --- Chord computation ---
+function getKeyChords(key) {
+  const isMinor = key.endsWith('m') && key.length > 1;
+  const rootStr = isMinor ? key.slice(0, -1) : key;
+  const rootSemi = noteToSemitone(rootStr);
+  if (rootSemi === undefined) return [];
+  const intervals = isMinor ? MINOR_INT : MAJOR_INT;
+  const types = isMinor ? MINOR_TYPES : MAJOR_TYPES;
+  const pref = getAccidentalPreference(key);
+  return intervals.map((iv, i) => {
+    const semi = (rootSemi + iv) % 12;
+    const name = preferredRoot(semi, pref) + types[i];
+    return { name, numeral: ROMAN_NUMERALS[i], degreeIdx: i };
+  });
+}
+
+function getBorrowedChords(key) {
+  const isMinor = key.endsWith('m') && key.length > 1;
+  const rootStr = isMinor ? key.slice(0, -1) : key;
+  const rootSemi = noteToSemitone(rootStr);
+  if (rootSemi === undefined) return [];
+  const intervals = isMinor ? MAJOR_INT : MINOR_INT;
+  const types = isMinor ? MAJOR_TYPES : MINOR_TYPES;
+  const pref = getAccidentalPreference(key);
+  const diatonic = getKeyChords(key).map(c => c.name);
+  const borrowed = [];
+  intervals.forEach((iv, i) => {
+    const semi = (rootSemi + iv) % 12;
+    const name = preferredRoot(semi, pref) + types[i];
+    if (!diatonic.includes(name)) borrowed.push({ name, label: 'borrow' });
+  });
+  return borrowed.slice(0, 4);
+}
+
+// Collect all chord names across active keys for pivot detection
+function getAllActiveChordNames() {
+  const map = {}; // chordName -> Set of keys
+  jamActiveKeys.forEach(key => {
+    getKeyChords(key).forEach(ch => {
+      if (!map[ch.name]) map[ch.name] = new Set();
+      map[ch.name].add(key);
+    });
+    getBorrowedChords(key).forEach(ch => {
+      if (!map[ch.name]) map[ch.name] = new Set();
+      map[ch.name].add(key);
+    });
+  });
+  return map;
+}
+
+// --- Render ---
+function renderJamAllChords() {
+  const container = document.getElementById('jamChordBlocks');
+  const pivotMap = getAllActiveChordNames();
+  let html = '';
+  jamActiveKeys.forEach(key => {
+    const diatonic = getKeyChords(key);
+    const borrowed = getBorrowedChords(key);
+    html += '<div class="jam-key-block">';
+    html += '<div class="jam-key-block-label">' + esc(key) + '</div>';
+    // Diatonic grid
+    html += '<div class="jam-chord-grid">';
+    diatonic.forEach(ch => {
+      const isPivot = pivotMap[ch.name] && pivotMap[ch.name].size > 1;
+      const pivotCls = isPivot ? ' jam-pivot' : '';
+      html += '<button class="jam-chord-btn'+pivotCls+'" data-jam-chord="'+esc(ch.name)+'" data-jam-key="'+esc(key)+'" data-jam-deg="'+ch.degreeIdx+'" style="background:'+getChordColor(ch.name)+'" onclick="playJamChordByName(\''+esc(ch.name)+'\',\''+esc(key)+'\','+ch.degreeIdx+')">' +
+        '<span class="jam-chord-numeral">'+ch.numeral+'</span>' +
+        '<span class="jam-chord-name">'+esc(ch.name)+'</span></button>';
+    });
+    html += '</div>';
+    // Borrowed grid
+    if (borrowed.length) {
+      html += '<div class="jam-borrow-grid">';
+      borrowed.forEach(ch => {
+        const isPivot = pivotMap[ch.name] && pivotMap[ch.name].size > 1;
+        const pivotCls = isPivot ? ' jam-pivot' : '';
+        html += '<button class="jam-borrow-btn'+pivotCls+'" data-jam-chord="'+esc(ch.name)+'" data-jam-key="'+esc(key)+'" data-jam-deg="-1" style="background:'+getChordColor(ch.name)+'" onclick="playJamChordByName(\''+esc(ch.name)+'\',\''+esc(key)+'\',-1)">' +
+          '<span class="jam-borrow-label">borrow</span>' +
+          '<span class="jam-borrow-name">'+esc(ch.name)+'</span></button>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html;
+  applyJamTransitions();
+}
+
+function applyJamTransitions() {
+  const allBtns = document.querySelectorAll('#jamChordBlocks .jam-chord-btn, #jamChordBlocks .jam-borrow-btn');
+  // Clear all transition classes
+  allBtns.forEach(b => b.classList.remove('jam-active','jam-strong','jam-medium','jam-weak','jam-neutral'));
+  if (!jamCurrentChord) return;
+  const curName = jamCurrentChord.name;
+  const curKey = jamCurrentChord.key;
+  const curDeg = jamCurrentChord.degreeIdx;
+
+  // Build transition map for current key if diatonic
+  const curKeyChords = getKeyChords(curKey);
+  const curKeyNames = curKeyChords.map(c => c.name);
+
+  allBtns.forEach(btn => {
+    const chName = btn.dataset.jamChord;
+    const chKey = btn.dataset.jamKey;
+    const chDeg = parseInt(btn.dataset.jamDeg);
+
+    if (chName === curName) {
+      btn.classList.add('jam-active');
+      return;
+    }
+
+    // Find strongest transition relationship across shared keys
+    let best = 'neutral';
+    // If both chords are in same key and both are diatonic
+    if (chKey === curKey && curDeg >= 0 && chDeg >= 0) {
+      const trans = TRANSITIONS[curDeg];
+      if (trans) {
+        if (trans.strong.includes(chDeg)) best = 'strong';
+        else if (trans.medium.includes(chDeg)) best = 'medium';
+        else if (trans.weak.includes(chDeg)) best = 'weak';
+      }
+    } else {
+      // Cross-key: check if curName is diatonic in chKey
+      const otherKeyChords = getKeyChords(chKey);
+      const otherNames = otherKeyChords.map(c => c.name);
+      const curInOther = otherKeyChords.findIndex(c => c.name === curName);
+      if (curInOther >= 0 && chDeg >= 0) {
+        const trans = TRANSITIONS[curInOther];
+        if (trans) {
+          if (trans.strong.includes(chDeg)) best = bestOf(best, 'strong');
+          else if (trans.medium.includes(chDeg)) best = bestOf(best, 'medium');
+          else if (trans.weak.includes(chDeg)) best = bestOf(best, 'weak');
+        }
+      }
+    }
+    btn.classList.add('jam-' + best);
+  });
+}
+
+function bestOf(a, b) {
+  const order = { strong: 3, medium: 2, weak: 1, neutral: 0 };
+  return (order[b] || 0) > (order[a] || 0) ? b : a;
+}
+
+// --- History ---
+function renderJamHistory() {
+  const el = document.getElementById('jamHistoryScroll');
+  if (!jamHistoryList.length) {
+    el.innerHTML = '<span class="jam-history-empty">Spiele einen Akkord...</span>';
+    return;
+  }
+  el.innerHTML = jamHistoryList.map(ch =>
+    '<span class="jam-history-badge" style="background:'+getChordColor(ch)+'">'+esc(ch)+'</span>'
+  ).join('');
+  el.scrollLeft = el.scrollWidth;
+}
+
+function jamUndo() {
+  if (!jamHistoryList.length) return;
+  jamHistoryList.pop();
+  stopJamAudio();
+  if (jamHistoryList.length) {
+    const prev = jamHistoryList[jamHistoryList.length - 1];
+    jamCurrentChord = { name: prev, key: jamActiveKeys[0], degreeIdx: findDegreeIdx(prev) };
+    playJamAudio(prev);
+  } else {
+    jamCurrentChord = null;
+  }
+  renderJamHistory();
+  applyJamTransitions();
+}
+
+function jamReset() {
+  jamHistoryList = [];
+  jamCurrentChord = null;
+  stopJamAudio();
+  renderJamHistory();
+  applyJamTransitions();
+}
+
+function findDegreeIdx(chordName) {
+  for (const key of jamActiveKeys) {
+    const chords = getKeyChords(key);
+    const idx = chords.findIndex(c => c.name === chordName);
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+
+// --- Duration ---
+function renderJamDurationRow() {
+  const row = document.getElementById('jamDurationRow');
+  const susActive = jamDurMode === 'sustain' ? ' active' : '';
+  const timeActive = jamDurMode === 'timed' ? ' active' : '';
+  let html = '<button class="jam-dur-toggle'+susActive+'" onclick="setJamDurMode(\'sustain\')">Dauerhaft</button>';
+  html += '<button class="jam-dur-toggle'+timeActive+'" onclick="setJamDurMode(\'timed\')">Zeit</button>';
+  if (jamDurMode === 'timed') {
+    JAM_DURATIONS.forEach(d => {
+      const act = d === jamDurValue ? ' active' : '';
+      html += '<button class="jam-dur-time'+act+'" onclick="setJamDurValue('+d+')">'+d+'s</button>';
+    });
+  }
+  row.innerHTML = html;
+}
+
+function setJamDurMode(mode) {
+  jamDurMode = mode;
+  localStorage.setItem(JAM_DUR_MODE_KEY, mode);
+  renderJamDurationRow();
+}
+
+function setJamDurValue(val) {
+  jamDurValue = val;
+  localStorage.setItem(JAM_DUR_KEY, val);
+  renderJamDurationRow();
+}
+
+// --- Play ---
+function playJamChordByName(name, key, degreeIdx) {
+  stopJamAudio();
+  jamCurrentChord = { name, key, degreeIdx };
+  jamHistoryList.push(name);
+  if (jamHistoryList.length > 12) jamHistoryList.shift();
+  renderJamHistory();
+  applyJamTransitions();
+  playJamAudio(name);
+  flashOverlayBadge(name);
+}
+
+function playJamAudio(chordName) {
+  const ctx = getAudioCtx();
+  const freqs = getChordFrequencies(chordName);
+  if (!freqs.length) return;
+  const instrEl = document.getElementById('jamInstrumentSelect');
+  const instrument = instrEl ? instrEl.value : 'synth';
+  const now = ctx.currentTime;
+  const dur = jamDurMode === 'sustain' ? 60 : jamDurValue;
+  switch(instrument) {
+    case 'piano': playPiano(ctx, freqs, now, dur); break;
+    case 'guitar': playGuitar(ctx, freqs, now, dur); break;
+    case 'eguitar': playEGuitar(ctx, freqs, now, dur); break;
+    case 'xylophone': playXylophone(ctx, freqs, now, dur); break;
+    default: playSynth(ctx, freqs, now, dur);
+  }
+  if (jamDurMode === 'timed') {
+    setTimeout(() => {
+      if (jamCurrentChord && jamCurrentChord.name === chordName) {
+        applyJamTransitions(); // refresh to remove active highlight
+      }
+    }, dur * 1000);
+  }
+}
+
+function stopJamAudio() {
+  if (audioCtx && audioCtx.state === 'running') {
+    audioCtx.close().catch(() => {});
+    audioCtx = null;
+  }
+}
+
+// --- Jam Song Overlay ---
+function openJamSongPicker() {
+  const list = document.getElementById('jamSongList');
+  list.innerHTML = songs.map(s =>
+    '<div class="jam-song-item" onclick="selectJamSong(\''+s.id+'\')">' + esc(s.title) + '</div>'
+  ).join('');
+  document.getElementById('jamSongPickerModal').classList.add('visible');
+}
+
+function closeJamSongPicker() {
+  document.getElementById('jamSongPickerModal').classList.remove('visible');
+}
+
+function selectJamSong(songId) {
+  closeJamSongPicker();
+  jamSongId = songId;
+  const song = getSong(songId);
+  if (!song) return;
+  jamSongLines = [];
+  song.sections.forEach(sec => {
+    jamSongLines.push({ text: '[' + (sec.label || sec.type) + ']', chords: [], isLabel: true });
+    sec.lines.forEach(ln => {
+      if (!ln.text.trim() && (!ln.chords || !ln.chords.length)) return;
+      jamSongLines.push({ text: ln.text, chords: ln.chords || [] });
+    });
+  });
+  jamLineIndex = 0;
+  renderJamOverlay();
+  document.getElementById('jamTextOverlay').classList.add('visible');
+  document.getElementById('jamSongCtaBtn').textContent = '\u266B ' + esc(song.title);
+}
+
+function closeJamSongOverlay() {
+  document.getElementById('jamTextOverlay').classList.remove('visible');
+  document.getElementById('jamSongCtaBtn').innerHTML = '&#9835; Song einblenden';
+  jamSongId = null;
+  jamSongLines = [];
+  jamLineIndex = 0;
+}
+
+function renderJamOverlay() {
+  const container = document.getElementById('jamOverlayContent');
+  if (!jamSongLines.length) { container.innerHTML = ''; return; }
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    const idx = jamLineIndex + i;
+    if (idx >= jamSongLines.length) break;
+    const line = jamSongLines[idx];
+    const dimClass = i > 0 ? ' dim' : '';
+    if (line.isLabel) {
+      html += '<div class="jam-overlay-line'+dimClass+'" style="color:#7a7a9a;font-style:italic;font-size:12px;font-weight:700">' + esc(line.text) + '</div>';
+    } else {
+      let chordRow = '';
+      if (line.chords.length) {
+        const sorted = [...line.chords].sort((a,b) => a.charIndex - b.charIndex);
+        chordRow = '<div class="jam-overlay-chords">' + sorted.map(ch =>
+          '<span class="jam-o-badge" data-jam-chord="'+esc(ch.chord)+'" style="left:'+(ch.charIndex*9.6)+'px;background:'+getChordColor(ch.chord)+'">'+esc(ch.chord)+'</span>'
+        ).join('') + '</div>';
+      }
+      html += '<div class="jam-overlay-line'+dimClass+'">' + chordRow +
+        '<div class="jam-overlay-text">' + (line.text ? esc(line.text) : '&nbsp;') + '</div></div>';
+    }
+  }
+  container.innerHTML = html;
+}
+
+// Tap overlay to advance
+document.addEventListener('click', function(e) {
+  const overlay = document.getElementById('jamTextOverlay');
+  if (!overlay || !overlay.classList.contains('visible')) return;
+  if (e.target.closest('.jam-overlay-close')) return;
+  if (e.target.closest('#jamOverlayContent') || e.target === overlay) {
+    if (jamLineIndex < jamSongLines.length - 1) {
+      jamLineIndex++;
+      renderJamOverlay();
+    }
+  }
+});
+
+function flashOverlayBadge(chordName) {
+  const overlay = document.getElementById('jamTextOverlay');
+  if (!overlay || !overlay.classList.contains('visible')) return;
+  const badges = overlay.querySelectorAll('.jam-overlay-line:first-child .jam-o-badge');
+  badges.forEach(b => {
+    if (b.dataset.jamChord === chordName) {
+      b.classList.add('jam-badge-flash');
+      setTimeout(() => b.classList.remove('jam-badge-flash'), 300);
+    }
+  });
 }
 
 // ===============================================
