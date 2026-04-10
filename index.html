@@ -873,8 +873,15 @@ body.light-mode .tp-content .play-text-row { color: #1a1a2e; }
 }
 
 /* ===== JAM BOARD ===== */
-#viewJam { padding: 0; display: flex; flex-direction: column; height: 100vh; }
-#viewJam.active { display: flex; }
+#viewJam {
+  padding: 0; background: #1a1a2e; height: 100vh;
+  max-width: none; position: relative; z-index: 1;
+}
+#viewJam.active { display: block; }
+body.light-mode #viewJam { background: #f5f5f0; }
+#viewJam:not(.active) .jam-header,
+#viewJam:not(.active) .jam-body,
+#viewJam:not(.active) .jam-text-overlay { display: none !important; }
 .jam-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 60;
   display: flex; align-items: center; gap: 8px; padding: 8px 12px;
