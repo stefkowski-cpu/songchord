@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/soundfont-player/dist/soundfont-player.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
@@ -3720,6 +3721,94 @@ function getChordFrequencies(chordName) {
   });
 }
 
+// Chord tones as MIDI note names (e.g. ['C4','E4','G4']) for Soundfont player
+function getChordNoteNames(chordName) {
+  const parsed = parseChordRoot(chordName);
+  if (!parsed) return ['C4', 'E4', 'G4'];
+  const rootSemi = noteToSemitone(parsed.root);
+  if (rootSemi === undefined) return ['C4', 'E4', 'G4'];
+  const intervals = getChordIntervals(parsed.modifier);
+  const baseOctave = 4;
+  return intervals.map(iv => {
+    const semi = rootSemi + iv;
+    const oct = baseOctave + Math.floor(semi / 12);
+    const noteIdx = ((semi % 12) + 12) % 12;
+    return CHROMATIC_SHARP[noteIdx] + oct;
+  });
+}
+
+// ===== Soundfont integration =====
+const SOUNDFONT_MAP = {
+  synth: 'acoustic_grand_piano',
+  piano: 'acoustic_grand_piano',
+  guitar: 'acoustic_guitar_steel',
+  eguitar: 'electric_guitar_clean',
+  xylophone: 'xylophone'
+};
+const sfCache = {};
+let sfPreloadStarted = false;
+let cpSustainHandles = [];
+let jamSustainHandles = [];
+let lastCpPlaybackMode = null; // 'sf' | 'synth'
+let lastJamPlaybackMode = null;
+
+function sfAvailable() { return typeof Soundfont !== 'undefined'; }
+
+function getSoundfont(instrumentKey) {
+  const name = SOUNDFONT_MAP[instrumentKey] || SOUNDFONT_MAP.synth;
+  if (sfCache[name] && sfCache[name].__ready) return Promise.resolve(sfCache[name]);
+  if (sfCache[name] && sfCache[name].__pending) return sfCache[name].__pending;
+  const ctx = getAudioCtx();
+  const slot = sfCache[name] = {};
+  const p = Soundfont.instrument(ctx, name).then(inst => {
+    sfCache[name] = inst;
+    inst.__ready = true;
+    return inst;
+  }).catch(err => {
+    delete sfCache[name];
+    throw err;
+  });
+  slot.__pending = p;
+  return p;
+}
+
+function preloadSoundfonts() {
+  if (sfPreloadStarted || !sfAvailable()) return;
+  sfPreloadStarted = true;
+  Object.keys(SOUNDFONT_MAP).forEach(k => {
+    getSoundfont(k).catch(() => {});
+  });
+}
+
+function installSfPreloadTrigger() {
+  const handler = () => { preloadSoundfonts(); };
+  window.addEventListener('pointerdown', handler, { once: true });
+  window.addEventListener('keydown', handler, { once: true });
+  window.addEventListener('touchstart', handler, { once: true, passive: true });
+}
+
+function showSfLoading() {
+  let el = document.getElementById('sfLoadingIndicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sfLoadingIndicator';
+    el.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);background:rgba(26,26,46,0.95);color:#f0ece2;padding:8px 14px;border-radius:6px;font-size:13px;z-index:9999;border:1px solid #e94560;font-family:Inter,sans-serif;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = '\u23F3 Instrument l\u00E4dt...';
+  el.style.display = 'block';
+}
+
+function hideSfLoading() {
+  const el = document.getElementById('sfLoadingIndicator');
+  if (el) el.style.display = 'none';
+}
+
+function stopSfHandles(list) {
+  list.forEach(h => { try { h && h.stop && h.stop(); } catch (_) {} });
+  list.length = 0;
+}
+
 // ===== Instrument synthesis =====
 function playSynth(ctx, freqs, startTime, duration) {
   const gain = ctx.createGain();
@@ -3853,6 +3942,25 @@ function playXylophone(ctx, freqs, startTime, duration) {
 }
 
 function playChordSound(chordName, instrument) {
+  const sfDur = instrument === 'xylophone' ? 0.8 : 2;
+  if (sfAvailable()) {
+    const notes = getChordNoteNames(chordName);
+    if (!notes.length) return;
+    const cacheName = SOUNDFONT_MAP[instrument] || SOUNDFONT_MAP.synth;
+    if (!sfCache[cacheName] || !sfCache[cacheName].__ready) showSfLoading();
+    getSoundfont(instrument).then(inst => {
+      hideSfLoading();
+      notes.forEach(n => inst.play(n, 0, { duration: sfDur, gain: 2 }));
+    }).catch(() => {
+      hideSfLoading();
+      playChordSoundSynth(chordName, instrument);
+    });
+    return;
+  }
+  playChordSoundSynth(chordName, instrument);
+}
+
+function playChordSoundSynth(chordName, instrument) {
   const ctx = getAudioCtx();
   const freqs = getChordFrequencies(chordName);
   const now = ctx.currentTime;
@@ -3869,13 +3977,32 @@ function playChordSound(chordName, instrument) {
 function playPreviewChord() {
   const chord = document.getElementById('chordInput').value.trim();
   if (!chord) return;
+  const instrEl = document.getElementById('instrumentSelect');
+  const instrument = instrEl ? instrEl.value : (localStorage.getItem('chordsheet_instrument') || 'synth');
+  const sfDur = instrument === 'xylophone' ? 0.8 : 2;
+  if (sfAvailable()) {
+    const notes = getChordNoteNames(chord);
+    if (!notes.length) return;
+    const cacheName = SOUNDFONT_MAP[instrument] || SOUNDFONT_MAP.synth;
+    if (!sfCache[cacheName] || !sfCache[cacheName].__ready) showSfLoading();
+    getSoundfont(instrument).then(inst => {
+      hideSfLoading();
+      notes.forEach(n => inst.play(n, 0, { duration: sfDur, gain: 2 }));
+    }).catch(() => {
+      hideSfLoading();
+      playPreviewChordSynth(chord, instrument);
+    });
+    return;
+  }
+  playPreviewChordSynth(chord, instrument);
+}
+
+function playPreviewChordSynth(chord, instrument) {
   const ctx = getAudioCtx();
   const freqs = getChordFrequencies(chord);
   if (!freqs.length) return;
   const now = ctx.currentTime;
   const dur = 1.5;
-  const instrEl = document.getElementById('instrumentSelect');
-  const instrument = instrEl ? instrEl.value : (localStorage.getItem('chordsheet_instrument') || 'synth');
   switch(instrument) {
     case 'piano': playPiano(ctx, freqs, now, dur); break;
     case 'guitar': playGuitar(ctx, freqs, now, dur); break;
@@ -4157,13 +4284,36 @@ function playNextPlayChord() {
 }
 
 function playSustainedChord(chordName) {
+  const instrEl = document.getElementById('cpInstrumentSelect');
+  const instrument = instrEl ? instrEl.value : 'synth';
+  if (sfAvailable()) {
+    const notes = getChordNoteNames(chordName);
+    if (!notes.length) return;
+    const cacheName = SOUNDFONT_MAP[instrument] || SOUNDFONT_MAP.synth;
+    if (!sfCache[cacheName] || !sfCache[cacheName].__ready) showSfLoading();
+    lastCpPlaybackMode = 'sf';
+    getSoundfont(instrument).then(inst => {
+      hideSfLoading();
+      notes.forEach(n => {
+        const h = inst.play(n, 0, { gain: 2 });
+        if (h) cpSustainHandles.push(h);
+      });
+    }).catch(() => {
+      hideSfLoading();
+      playSustainedChordSynth(chordName, instrument);
+    });
+    return;
+  }
+  playSustainedChordSynth(chordName, instrument);
+}
+
+function playSustainedChordSynth(chordName, instrument) {
+  lastCpPlaybackMode = 'synth';
   const ctx = getAudioCtx();
   const freqs = getChordFrequencies(chordName);
   if (!freqs.length) return;
-  const instrEl = document.getElementById('cpInstrumentSelect');
-  const instrument = instrEl ? instrEl.value : 'synth';
   const now = ctx.currentTime;
-  const dur = 60; // long sustain, stopped manually on next chord
+  const dur = 60;
   switch(instrument) {
     case 'piano': playPiano(ctx, freqs, now, dur); break;
     case 'guitar': playGuitar(ctx, freqs, now, dur); break;
@@ -4174,7 +4324,10 @@ function playSustainedChord(chordName) {
 }
 
 function stopCpSustain() {
-  if (audioCtx && audioCtx.state === 'running') {
+  stopSfHandles(cpSustainHandles);
+  // Only close ctx if previous playback used the synth fallback; closing ctx
+  // would destroy loaded soundfonts otherwise.
+  if (lastCpPlaybackMode === 'synth' && audioCtx && audioCtx.state === 'running') {
     audioCtx.close().catch(() => {});
     audioCtx = null;
   }
@@ -4578,19 +4731,29 @@ function playJamChordByName(name, key, degreeIdx) {
 }
 
 function playJamAudio(chordName) {
-  const ctx = getAudioCtx();
-  const freqs = getChordFrequencies(chordName);
-  if (!freqs.length) return;
   const instrEl = document.getElementById('jamInstrumentSelect');
   const instrument = instrEl ? instrEl.value : 'synth';
-  const now = ctx.currentTime;
   const dur = jamDurMode === 'sustain' ? 60 : jamDurValue;
-  switch(instrument) {
-    case 'piano': playPiano(ctx, freqs, now, dur); break;
-    case 'guitar': playGuitar(ctx, freqs, now, dur); break;
-    case 'eguitar': playEGuitar(ctx, freqs, now, dur); break;
-    case 'xylophone': playXylophone(ctx, freqs, now, dur); break;
-    default: playSynth(ctx, freqs, now, dur);
+  if (sfAvailable()) {
+    const notes = getChordNoteNames(chordName);
+    if (!notes.length) return;
+    const cacheName = SOUNDFONT_MAP[instrument] || SOUNDFONT_MAP.synth;
+    if (!sfCache[cacheName] || !sfCache[cacheName].__ready) showSfLoading();
+    lastJamPlaybackMode = 'sf';
+    const sustainMode = jamDurMode === 'sustain';
+    getSoundfont(instrument).then(inst => {
+      hideSfLoading();
+      notes.forEach(n => {
+        const opts = sustainMode ? { gain: 2 } : { duration: dur, gain: 2 };
+        const h = inst.play(n, 0, opts);
+        if (sustainMode && h) jamSustainHandles.push(h);
+      });
+    }).catch(() => {
+      hideSfLoading();
+      playJamAudioSynth(chordName, instrument, dur);
+    });
+  } else {
+    playJamAudioSynth(chordName, instrument, dur);
   }
   if (jamDurMode === 'timed') {
     setTimeout(() => {
@@ -4601,8 +4764,24 @@ function playJamAudio(chordName) {
   }
 }
 
+function playJamAudioSynth(chordName, instrument, dur) {
+  lastJamPlaybackMode = 'synth';
+  const ctx = getAudioCtx();
+  const freqs = getChordFrequencies(chordName);
+  if (!freqs.length) return;
+  const now = ctx.currentTime;
+  switch(instrument) {
+    case 'piano': playPiano(ctx, freqs, now, dur); break;
+    case 'guitar': playGuitar(ctx, freqs, now, dur); break;
+    case 'eguitar': playEGuitar(ctx, freqs, now, dur); break;
+    case 'xylophone': playXylophone(ctx, freqs, now, dur); break;
+    default: playSynth(ctx, freqs, now, dur);
+  }
+}
+
 function stopJamAudio() {
-  if (audioCtx && audioCtx.state === 'running') {
+  stopSfHandles(jamSustainHandles);
+  if (lastJamPlaybackMode === 'synth' && audioCtx && audioCtx.state === 'running') {
     audioCtx.close().catch(() => {});
     audioCtx = null;
   }
@@ -4707,6 +4886,7 @@ loadFolders();
 loadChordHistory();
 initDarkMode();
 renderSongList();
+installSfPreloadTrigger();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

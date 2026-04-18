@@ -1,4 +1,4 @@
-const CACHE_NAME = 'songchord-v1';
+const CACHE_NAME = 'songchord-v3';
 const ASSETS = [
   '/songchord/',
   '/songchord/index.html',
@@ -25,7 +25,19 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
-  );
+  const req = event.request;
+  const isHTML = req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
+  if (isHTML) {
+    // Network-first for HTML so a broken cached page can't self-perpetuate
+    event.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(req).then(c => c || caches.match('/songchord/index.html')))
+    );
+    return;
+  }
+  event.respondWith(caches.match(req).then(cached => cached || fetch(req)));
 });
