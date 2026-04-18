@@ -1,0 +1,28 @@
+<!-- ============================================================
+     PWA-META-TAGS – in den <head> einfügen
+     ============================================================ -->
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/songchord/manifest.json">
+
+<!-- iOS / Apple -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="songchord">
+<link rel="apple-touch-icon" href="/songchord/icon-180.png">
+
+<!-- Theme Color (Adressleiste / Status Bar) -->
+<meta name="theme-color" content="#1a1a2e">
+
+<!-- ============================================================
+     SERVICE WORKER – direkt vor </body> einfügen
+     ============================================================ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/songchord/sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.warn('SW failed:', err));
+    });
+  }
+</script>
