@@ -1401,6 +1401,109 @@ body.light-mode .jr-stt-header, body.light-mode .jr-stt-toggle { color: #1a1a2e;
 body.light-mode .jr-stt-progress { background: #f5f5f0; border-color: #ddd; color: #1a1a2e; }
 body.light-mode .jr-stt-textarea { background: #fff; color: #1a1a2e; border-color: #ddd; }
 
+/* Language selector */
+.jr-lang-selector {
+  display: flex; gap: 6px; margin-bottom: 8px;
+}
+.jr-lang-btn {
+  flex: 1; padding: 8px 12px; border: 1px solid #2a2a4a;
+  background: #16213e; color: #f0ece2; border-radius: 8px;
+  font-size: 14px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; gap: 6px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  min-height: 40px; font-family: inherit;
+}
+.jr-lang-btn:hover { border-color: #e94560; }
+.jr-lang-btn.active {
+  background: #e94560; border-color: #e94560; color: #fff;
+}
+.jr-lang-btn .jr-flag { font-size: 18px; line-height: 1; }
+@media (max-width: 400px) {
+  .jr-lang-btn .jr-lang-label { display: none; }
+}
+body.light-mode .jr-lang-btn {
+  background: #f5f5f0; border-color: #ddd; color: #1a1a2e;
+}
+body.light-mode .jr-lang-btn:hover { border-color: #e94560; }
+body.light-mode .jr-lang-btn.active {
+  background: #e94560; border-color: #e94560; color: #fff;
+}
+
+/* Codeword section */
+.jr-codeword-hint {
+  font-size: 12px; color: #7a7a9a; margin: 4px 0 10px 26px;
+  line-height: 1.4;
+}
+body.light-mode .jr-codeword-hint { color: #888; }
+
+/* Raw / Structured view toggle */
+.jr-view-toggle {
+  display: inline-flex; gap: 4px; margin-bottom: 6px;
+  background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 6px;
+  padding: 3px;
+}
+.jr-view-toggle-btn {
+  background: none; border: none; color: #7a7a9a;
+  padding: 5px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.jr-view-toggle-btn.active { background: #e94560; color: #fff; }
+.jr-view-toggle-btn:not(.active):hover { color: #f0ece2; }
+body.light-mode .jr-view-toggle { background: #fff; border-color: #ddd; }
+body.light-mode .jr-view-toggle-btn:not(.active):hover { color: #1a1a2e; }
+
+/* Info button in view header */
+.jr-info-btn {
+  margin-left: auto;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: none; border: 1px solid #f0ece2;
+  color: #f0ece2; font-size: 14px; font-style: italic;
+  font-family: 'Georgia', serif; font-weight: 700;
+  cursor: pointer; display: inline-flex; align-items: center;
+  justify-content: center; line-height: 1;
+}
+.jr-info-btn:hover { background: rgba(240,236,226,0.08); }
+body.light-mode .jr-info-btn { border-color: #1a1a2e; color: #1a1a2e; }
+body.light-mode .jr-info-btn:hover { background: rgba(26,26,46,0.06); }
+
+/* Info modal (overlay) */
+.jr-info-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 300;
+  display: none; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.jr-info-modal.visible { display: flex; }
+.jr-info-content {
+  position: relative;
+  background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px;
+  padding: 24px; padding-top: 20px;
+  max-width: 520px; width: 100%; max-height: 80vh; overflow-y: auto;
+  color: #f0ece2; line-height: 1.5;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+.jr-info-content h2 { font-size: 18px; margin: 0 0 14px; padding-right: 32px; }
+.jr-info-content h3 { color: #e94560; font-size: 14px; margin: 18px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.jr-info-content p { font-size: 13px; margin: 6px 0; }
+.jr-info-content ul { margin: 6px 0 6px 18px; padding: 0; }
+.jr-info-content li { font-size: 13px; margin: 4px 0; }
+.jr-info-content .jr-info-example {
+  display: block; margin: 6px 0; padding: 8px 10px;
+  background: #16213e; border-left: 3px solid #e94560;
+  border-radius: 4px; font-style: italic; font-size: 12px;
+}
+.jr-info-close {
+  position: absolute; top: 10px; right: 14px;
+  background: none; border: none; color: #f0ece2;
+  font-size: 24px; cursor: pointer; line-height: 1; padding: 4px 8px;
+}
+.jr-info-close:hover { color: #e94560; }
+body.light-mode .jr-info-content { background: #fff; border-color: #ddd; color: #1a1a2e; }
+body.light-mode .jr-info-content h3 { color: #e94560; }
+body.light-mode .jr-info-content .jr-info-example { background: #f5f5f0; }
+body.light-mode .jr-info-close { color: #1a1a2e; }
+
 body.light-mode .jr-entry-btn { background: #fff; color: #1a1a2e; border-color: #f0a500; }
 body.light-mode .jr-entry-btn:hover { background: #faf7ed; }
 body.light-mode .jr-view-header h2 { color: #1a1a2e; }
@@ -1715,6 +1818,7 @@ body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
     <button class="jr-back-btn" onclick="jr_close()" aria-label="Zur&uuml;ck">&lsaquo;</button>
     <h2>Jam Recorder</h2>
     <span class="jr-beta-badge">Beta</span>
+    <button class="jr-info-btn" onclick="jr_openInfoModal()" aria-label="Info / Anleitung" title="Anleitung">i</button>
   </div>
   <p class="jr-hint-text">Nimm deine Jam-Session auf. Das Modul erkennt automatisch die Akkordfolge. Funktioniert am besten mit klarem Solo-Instrument (Gitarre, Piano).</p>
 
@@ -1751,6 +1855,19 @@ body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
     <div class="jr-stt-section" id="jr_sttSection">
       <div class="jr-stt-header">Liedtext erkennen <span class="jr-beta-badge">Beta</span></div>
       <p class="jr-hint-text">Speech-to-Text funktioniert am besten bei klarem gesprochenem Text. Bei Gesang k&ouml;nnen Fehler auftreten &ndash; bitte nach Transkription korrigieren.</p>
+
+      <div class="jr-lang-selector" role="group" aria-label="Sprache f&uuml;r Transkription">
+        <button type="button" class="jr-lang-btn active" data-lang="de" onclick="jr_setSttLanguage('de')"><span class="jr-flag">&#127465;&#127466;</span><span class="jr-lang-label">Deutsch</span></button>
+        <button type="button" class="jr-lang-btn" data-lang="en" onclick="jr_setSttLanguage('en')"><span class="jr-flag">&#127468;&#127463;</span><span class="jr-lang-label">English</span></button>
+        <button type="button" class="jr-lang-btn" data-lang="auto" onclick="jr_setSttLanguage('auto')"><span class="jr-flag">&#127760;</span><span class="jr-lang-label">Auto</span></button>
+      </div>
+
+      <label class="jr-stt-toggle">
+        <input type="checkbox" id="jr_sttCodewords" checked onchange="jr_onUseCodewordsChange(this.checked)">
+        <span>Codewort &bdquo;neue Zeile&ldquo; erkennen</span>
+      </label>
+      <div class="jr-codeword-hint">Tipp: Sag w&auml;hrend der Aufnahme &bdquo;neue Zeile&ldquo; an gew&uuml;nschten Umbruchstellen &ndash; wird automatisch in Zeilenumbruch umgewandelt.</div>
+
       <label class="jr-stt-toggle">
         <input type="checkbox" id="jr_sttEnable" onchange="jr_onSttToggle(this.checked)">
         <span>Text aus Aufnahme transkribieren</span>
@@ -1758,6 +1875,10 @@ body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
       <div class="jr-stt-controls" id="jr_sttControls" style="display:none">
         <button id="jr_sttStartBtn" class="toolbar-btn" onclick="jr_startTranscription()">Transkription starten</button>
         <div id="jr_sttProgress" class="jr-stt-progress" style="display:none">Lade Sprachmodell&hellip;</div>
+        <div class="jr-view-toggle" id="jr_sttViewToggle" style="display:none" role="group" aria-label="Ansicht">
+          <button type="button" class="jr-view-toggle-btn" data-view="raw" onclick="jr_setSttView('raw')">Rohtranskript</button>
+          <button type="button" class="jr-view-toggle-btn active" data-view="processed" onclick="jr_setSttView('processed')">Strukturiert</button>
+        </div>
         <textarea id="jr_sttText" class="jr-stt-textarea" placeholder="Transkribierter Text erscheint hier&hellip;" style="display:none"></textarea>
         <div id="jr_sttError" class="jr-error" style="display:none"></div>
       </div>
@@ -1767,6 +1888,57 @@ body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
       <button class="toolbar-btn" onclick="jr_saveAsSong()">Als neuen Song speichern</button>
       <button class="toolbar-btn secondary" onclick="jr_resetForNewRecording()">Neu aufnehmen</button>
       <button class="toolbar-btn secondary" onclick="jr_close()">Zur&uuml;ck</button>
+    </div>
+  </div>
+
+  <!-- INFO MODAL -->
+  <div class="jr-info-modal" id="jr_infoModal" onclick="jr_onInfoBackdrop(event)">
+    <div class="jr-info-content" onclick="event.stopPropagation()">
+      <button class="jr-info-close" onclick="jr_closeInfoModal()" aria-label="Schlie&szlig;en">&times;</button>
+      <h2>So funktioniert der Jam Recorder</h2>
+
+      <h3>Akkorde aufnehmen</h3>
+      <ul>
+        <li>Spiele dein Instrument (Gitarre, Piano) klar und gut h&ouml;rbar ins Mikro.</li>
+        <li>Einzelne Akkorde werden automatisch erkannt.</li>
+        <li>&Uuml;ber dem Record-Button l&auml;sst sich die Mindestdauer pro Akkord einstellen (k&uuml;rzere Werte f&uuml;r schnelle Wechsel).</li>
+        <li>Nach Stopp: Akkordfolge, Tonart und BPM werden angezeigt.</li>
+        <li>Akkorde k&ouml;nnen einzeln korrigiert werden.</li>
+      </ul>
+
+      <h3>Liedtext mit aufnehmen</h3>
+      <ul>
+        <li>Aktiviere &bdquo;Text aus Aufnahme transkribieren&ldquo; (Beta).</li>
+        <li>Sprich deinen Text zwischen den Akkorden ins Mikro.</li>
+        <li>W&auml;hle die passende Sprache vor Aufnahmestart (&#127465;&#127466; Deutsch, &#127468;&#127463; English, &#127760; Auto).</li>
+        <li>Beim ersten Mal dauert das Laden des Sprachmodells ca. 30&ndash;60&nbsp;s, danach sofort verf&uuml;gbar.</li>
+      </ul>
+
+      <h3>Codewort f&uuml;r Zeilenumbr&uuml;che</h3>
+      <ul>
+        <li>W&auml;hrend du sprichst/singst, sag das Codewort &bdquo;neue Zeile&ldquo; an den Stellen wo ein Zeilenumbruch kommen soll.</li>
+      </ul>
+      <p>Beispiel-Aufnahme:</p>
+      <span class="jr-info-example">&bdquo;Ich lieg am Strand neue Zeile die Sonne scheint mir ins Gesicht neue Zeile oh was f&uuml;r ein Tag&ldquo;</span>
+      <ul>
+        <li>Das Codewort wird automatisch in einen Zeilenumbruch umgewandelt.</li>
+        <li><b>Tipp:</b> Mach kurze Pausen vor und nach dem Codewort, dann wird es zuverl&auml;ssiger erkannt.</li>
+      </ul>
+
+      <h3>Ergebnis speichern</h3>
+      <ul>
+        <li>Ansichts-Toggle zwischen Rohtranskript und strukturiertem Text.</li>
+        <li>Text ist direkt editierbar, bevor du speicherst.</li>
+        <li>&bdquo;Als neuen Song speichern&ldquo; legt einen neuen Songchord-Eintrag an.</li>
+        <li>Alle erkannten Akkorde werden &uuml;ber den Text verteilt.</li>
+      </ul>
+
+      <h3>Bekannte Grenzen</h3>
+      <ul>
+        <li>Funktioniert am besten bei Solo-Instrument + klarer Stimme.</li>
+        <li>Gesang ist schwerer zu transkribieren als gesprochener Text.</li>
+        <li>Bei mehreren Instrumenten gleichzeitig kann die Akkorderkennung ungenau werden.</li>
+      </ul>
     </div>
   </div>
 </div>
@@ -5361,6 +5533,8 @@ if ('serviceWorker' in navigator) {
 
   const JR_STORAGE_KEY = 'jr_recordings';
   const JR_MIN_DUR_KEY = 'jr_minChordDuration'; // seconds, float
+  const JR_LANG_KEY = 'jr_sttLanguage';         // 'de' | 'en' | 'auto'
+  const JR_CODEWORDS_KEY = 'jr_sttUseCodewords'; // '1' | '0'
   const JR_DEBUG_KEY = 'jr_debug';
   const JR_SAMPLE_INTERVAL_MS = 500;
   const JR_DEFAULT_MIN_DUR_MS = 1000;
@@ -5400,10 +5574,17 @@ if ('serviceWorker' in navigator) {
     mediaRecorder: null,
     recordedChunks: [],
     lastAudioBlob: null,
-    transcription: null,         // plain string
+    transcription: null,         // plain string (current visible/edited text)
     transcriptionChunks: null,   // array of { text, timestamp: [start, end] }
     transcriberPipeline: null,   // cached whisper pipeline
     transformersModule: null,    // cached dynamic-imported module
+    // Extension: language + codeword toggle + raw/processed views
+    sttLanguage: 'de',            // 'de' | 'en' | 'auto'
+    useCodewords: true,
+    lastRawTranscript: '',        // whisper output unmodified
+    lastProcessedTranscript: '',  // after codeword replacement
+    sttView: 'processed',         // 'raw' | 'processed'
+    sttUserEdited: false,         // true once user types into the textarea
   };
 
   function jr_log() {
@@ -5429,6 +5610,8 @@ if ('serviceWorker' in navigator) {
   function jr_openView() {
     jr_resetForNewRecording();
     jr_loadMinDur();
+    jr_loadSttLanguage();
+    jr_loadUseCodewords();
     jr_initSttCapability();
     if (typeof setView === 'function') setView('jamRecorderView');
     if (!jr_isSupported()) {
@@ -5479,8 +5662,105 @@ if ('serviceWorker' in navigator) {
     }
   }
 
+  // Language selector
+  function jr_loadSttLanguage() {
+    const v = localStorage.getItem(JR_LANG_KEY);
+    const lang = (v === 'de' || v === 'en' || v === 'auto') ? v : 'de';
+    jr_state.sttLanguage = lang;
+    jr_reflectSttLanguage();
+  }
+
+  function jr_reflectSttLanguage() {
+    const btns = document.querySelectorAll('#jr_sttSection .jr-lang-btn');
+    btns.forEach(function (b) {
+      b.classList.toggle('active', b.dataset.lang === jr_state.sttLanguage);
+    });
+  }
+
+  function jr_setSttLanguage(lang) {
+    if (lang !== 'de' && lang !== 'en' && lang !== 'auto') return;
+    jr_state.sttLanguage = lang;
+    try { localStorage.setItem(JR_LANG_KEY, lang); } catch (e) {}
+    jr_reflectSttLanguage();
+    jr_log('stt language set', lang);
+  }
+
+  // Codeword toggle
+  function jr_loadUseCodewords() {
+    const v = localStorage.getItem(JR_CODEWORDS_KEY);
+    // Default true — only disable when explicitly set to '0'
+    jr_state.useCodewords = (v !== '0');
+    const cb = jr_$('jr_sttCodewords');
+    if (cb) cb.checked = jr_state.useCodewords;
+  }
+
+  function jr_onUseCodewordsChange(checked) {
+    jr_state.useCodewords = !!checked;
+    try { localStorage.setItem(JR_CODEWORDS_KEY, checked ? '1' : '0'); } catch (e) {}
+    // If we have an existing transcription, refresh the processed version and
+    // update the textarea (unless user has manually edited it).
+    if (jr_state.lastRawTranscript) {
+      jr_state.lastProcessedTranscript = jr_processCodewords(jr_state.lastRawTranscript);
+      if (!jr_state.sttUserEdited && jr_state.sttView === 'processed') {
+        const ta = jr_$('jr_sttText');
+        if (ta) { ta.value = jr_state.lastProcessedTranscript; jr_state.transcription = ta.value; }
+      }
+    }
+  }
+
+  function jr_processCodewords(rawText) {
+    if (!jr_state.useCodewords || !rawText) return rawText || '';
+    // Match "neue zeile" / "new line" as whole words, absorbing surrounding
+    // punctuation and whitespace so the neighbouring text isn't orphaned.
+    const pattern = /[,.!?\s]*\b(neue\s+zeile|new\s+line)\b[,.!?\s]*/gi;
+    let out = rawText.replace(pattern, '\n');
+    // Cap blank runs to at most one empty line
+    out = out.replace(/\n{3,}/g, '\n\n');
+    // Trim each line and strip leading/trailing whitespace overall
+    out = out.split('\n').map(function (l) { return l.trim(); }).join('\n');
+    return out.trim();
+  }
+
+  // View toggle (raw ⇄ processed)
+  function jr_setSttView(view) {
+    if (view !== 'raw' && view !== 'processed') return;
+    if (view === jr_state.sttView) return;
+    if (jr_state.sttUserEdited) {
+      const ok = window.confirm('Du hast den Text manuell geändert. Änderungen verwerfen und Ansicht wechseln?');
+      if (!ok) return;
+    }
+    jr_state.sttView = view;
+    jr_state.sttUserEdited = false;
+    const ta = jr_$('jr_sttText');
+    const nextText = view === 'raw' ? jr_state.lastRawTranscript : jr_state.lastProcessedTranscript;
+    if (ta) { ta.value = nextText; jr_state.transcription = nextText; }
+    jr_reflectSttView();
+  }
+
+  function jr_reflectSttView() {
+    const btns = document.querySelectorAll('#jr_sttViewToggle .jr-view-toggle-btn');
+    btns.forEach(function (b) {
+      b.classList.toggle('active', b.dataset.view === jr_state.sttView);
+    });
+  }
+
+  // Info modal
+  function jr_openInfoModal() {
+    const m = jr_$('jr_infoModal');
+    if (m) m.classList.add('visible');
+  }
+  function jr_closeInfoModal() {
+    const m = jr_$('jr_infoModal');
+    if (m) m.classList.remove('visible');
+  }
+  function jr_onInfoBackdrop(e) {
+    // Close when the backdrop itself is clicked (content has its own stopPropagation)
+    if (e && e.target && e.target.id === 'jr_infoModal') jr_closeInfoModal();
+  }
+
   function jr_close() {
     if (jr_state.recording) jr_stopRecording();
+    jr_closeInfoModal();
     if (typeof navigateBack === 'function') navigateBack();
     else if (typeof showSongList === 'function') showSongList();
   }
@@ -5956,24 +6236,40 @@ if ('serviceWorker' in navigator) {
       jr_log('pcm ready', pcm.length, 'samples');
 
       jr_setSttStatus('Transkribiere…');
-      const result = await transcriber(pcm, {
-        language: 'german',
+      const options = {
         task: 'transcribe',
         return_timestamps: 'word',
         chunk_length_s: 30,
         stride_length_s: 5,
-      });
-      jr_log('transcription done', result);
+      };
+      // Only set language when not in auto mode — Whisper then self-detects
+      if (jr_state.sttLanguage === 'de') options.language = 'de';
+      else if (jr_state.sttLanguage === 'en') options.language = 'en';
+      const result = await transcriber(pcm, options);
+      jr_log('transcription done', jr_state.sttLanguage, result);
 
-      const text = (result && typeof result.text === 'string') ? result.text.trim() : '';
-      jr_state.transcription = text;
+      const rawText = (result && typeof result.text === 'string') ? result.text.trim() : '';
+      const processedText = jr_processCodewords(rawText);
+      jr_state.lastRawTranscript = rawText;
+      jr_state.lastProcessedTranscript = processedText;
       jr_state.transcriptionChunks = (result && Array.isArray(result.chunks)) ? result.chunks : null;
+      // Default view: processed (structured)
+      jr_state.sttView = 'processed';
+      jr_state.sttUserEdited = false;
+      const displayText = processedText;
+      jr_state.transcription = displayText;
 
       jr_setSttStatus('');
+      const viewToggle = jr_$('jr_sttViewToggle');
+      if (viewToggle) viewToggle.style.display = 'inline-flex';
+      jr_reflectSttView();
       if (textarea) {
-        textarea.value = text;
+        textarea.value = displayText;
         textarea.style.display = 'block';
-        textarea.addEventListener('input', function () { jr_state.transcription = textarea.value; }, { once: false });
+        textarea.oninput = function () {
+          jr_state.transcription = textarea.value;
+          jr_state.sttUserEdited = true;
+        };
       }
     } catch (err) {
       jr_log('transcription error', err);
@@ -6019,6 +6315,10 @@ if ('serviceWorker' in navigator) {
     jr_state.lastAudioBlob = null;
     jr_state.transcription = null;
     jr_state.transcriptionChunks = null;
+    jr_state.lastRawTranscript = '';
+    jr_state.lastProcessedTranscript = '';
+    jr_state.sttView = 'processed';
+    jr_state.sttUserEdited = false;
     const timer = jr_$('jr_timer'); if (timer) timer.textContent = '00:00';
     const status = jr_$('jr_status'); if (status) status.textContent = 'Bereit';
     const live = jr_$('jr_liveChord'); if (live) live.textContent = '–';
@@ -6029,8 +6329,10 @@ if ('serviceWorker' in navigator) {
     const sttToggle = jr_$('jr_sttEnable'); if (sttToggle) sttToggle.checked = false;
     const sttControls = jr_$('jr_sttControls'); if (sttControls) sttControls.style.display = 'none';
     const sttProg = jr_$('jr_sttProgress'); if (sttProg) { sttProg.style.display = 'none'; sttProg.textContent = ''; }
-    const sttText = jr_$('jr_sttText'); if (sttText) { sttText.style.display = 'none'; sttText.value = ''; }
+    const sttText = jr_$('jr_sttText'); if (sttText) { sttText.style.display = 'none'; sttText.value = ''; sttText.oninput = null; }
     const sttErr = jr_$('jr_sttError'); if (sttErr) { sttErr.style.display = 'none'; sttErr.innerHTML = ''; }
+    const sttViewT = jr_$('jr_sttViewToggle'); if (sttViewT) sttViewT.style.display = 'none';
+    jr_reflectSttView();
     const btn = jr_$('jr_recordBtn');
     if (btn) { btn.classList.remove('jr-recording'); btn.disabled = !jr_isSupported(); }
   }
@@ -6119,6 +6421,12 @@ if ('serviceWorker' in navigator) {
   window.jr_onMinDurChange = jr_onMinDurChange;
   window.jr_onSttToggle = jr_onSttToggle;
   window.jr_startTranscription = jr_startTranscription;
+  window.jr_setSttLanguage = jr_setSttLanguage;
+  window.jr_onUseCodewordsChange = jr_onUseCodewordsChange;
+  window.jr_setSttView = jr_setSttView;
+  window.jr_openInfoModal = jr_openInfoModal;
+  window.jr_closeInfoModal = jr_closeInfoModal;
+  window.jr_onInfoBackdrop = jr_onInfoBackdrop;
 })();
 </script>
 </body>
