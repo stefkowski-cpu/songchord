@@ -1331,6 +1331,76 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
 .jr-action-bar .toolbar-btn { flex: 1; min-width: 140px; }
 .jr-empty { color: #7a7a9a; font-style: italic; padding: 12px; }
 
+/* Min-duration slider */
+.jr-settings-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 12px;
+}
+.jr-slider-label {
+  font-size: 12px; color: #f0ece2; display: inline-flex;
+  align-items: center; gap: 6px; font-weight: 600;
+}
+.jr-help-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #2a2a4a; color: #f0ece2; font-size: 11px;
+  font-weight: 700; cursor: help; font-family: sans-serif;
+}
+.jr-slider {
+  flex: 1; min-width: 140px; height: 28px;
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer; accent-color: #e94560;
+}
+.jr-slider-value {
+  font-family: 'Courier Prime', monospace; font-weight: 700;
+  color: #f0ece2; min-width: 50px; text-align: right; font-size: 14px;
+}
+
+/* Speech-to-Text section */
+.jr-stt-section {
+  margin-top: 14px; padding: 14px;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 10px;
+}
+.jr-stt-header {
+  font-size: 15px; font-weight: 700; color: #f0ece2;
+  margin-bottom: 6px; display: flex; align-items: center;
+}
+.jr-stt-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: #f0ece2; font-size: 13px; margin: 10px 0; cursor: pointer;
+}
+.jr-stt-toggle input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: #e94560; cursor: pointer;
+}
+.jr-stt-controls { display: flex; flex-direction: column; gap: 8px; }
+.jr-stt-progress {
+  padding: 8px 10px; background: #1a1a2e; border: 1px solid #2a2a4a;
+  border-radius: 6px; font-size: 13px; color: #f0ece2;
+  display: flex; align-items: center; gap: 8px;
+}
+.jr-stt-progress::before {
+  content: ''; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #2a2a4a; border-top-color: #e94560;
+  animation: jr-spin 0.8s linear infinite; flex-shrink: 0;
+}
+@keyframes jr-spin { to { transform: rotate(360deg); } }
+.jr-stt-textarea {
+  width: 100%; min-height: 100px; resize: vertical;
+  background: #1a1a2e; color: #f0ece2;
+  border: 1px solid #2a2a4a; border-radius: 6px;
+  padding: 10px; font-size: 14px; font-family: inherit; line-height: 1.5;
+}
+.jr-stt-textarea:focus { outline: none; border-color: #e94560; }
+
+body.light-mode .jr-settings-row { background: #fff; border-color: #ddd; }
+body.light-mode .jr-slider-label, body.light-mode .jr-slider-value { color: #1a1a2e; }
+body.light-mode .jr-help-icon { background: #eee; color: #1a1a2e; }
+body.light-mode .jr-stt-section { background: #fff; border-color: #ddd; }
+body.light-mode .jr-stt-header, body.light-mode .jr-stt-toggle { color: #1a1a2e; }
+body.light-mode .jr-stt-progress { background: #f5f5f0; border-color: #ddd; color: #1a1a2e; }
+body.light-mode .jr-stt-textarea { background: #fff; color: #1a1a2e; border-color: #ddd; }
+
 body.light-mode .jr-entry-btn { background: #fff; color: #1a1a2e; border-color: #f0a500; }
 body.light-mode .jr-entry-btn:hover { background: #faf7ed; }
 body.light-mode .jr-view-header h2 { color: #1a1a2e; }
@@ -1650,6 +1720,15 @@ body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
 
   <div id="jr_compatWarning" class="jr-error" style="display:none"></div>
 
+  <div class="jr-settings-row">
+    <label class="jr-slider-label" for="jr_minDurSlider">
+      Mindestdauer pro Akkord
+      <span class="jr-help-icon" title="K&uuml;rzere Werte erkennen schnelle Wechsel (Funk, Jazz), k&ouml;nnen aber Fehler produzieren. L&auml;ngere Werte gl&auml;tten st&auml;rker." aria-label="Hilfe">?</span>
+    </label>
+    <input type="range" id="jr_minDurSlider" class="jr-slider" min="0.2" max="3.0" step="0.1" value="1.0" oninput="jr_onMinDurChange(this.value)">
+    <span id="jr_minDurValue" class="jr-slider-value">1.0s</span>
+  </div>
+
   <div class="jr-control-section">
     <div class="jr-timer" id="jr_timer">00:00</div>
     <button id="jr_recordBtn" class="jr-record-btn" onclick="jr_toggleRecording()" aria-label="Aufnahme starten/stoppen"></button>
@@ -1668,6 +1747,22 @@ body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
       <span>Akkorde: <b id="jr_resultCount">0</b></span>
     </div>
     <div class="jr-chord-timeline" id="jr_resultTimeline"></div>
+
+    <div class="jr-stt-section" id="jr_sttSection">
+      <div class="jr-stt-header">Liedtext erkennen <span class="jr-beta-badge">Beta</span></div>
+      <p class="jr-hint-text">Speech-to-Text funktioniert am besten bei klarem gesprochenem Text. Bei Gesang k&ouml;nnen Fehler auftreten &ndash; bitte nach Transkription korrigieren.</p>
+      <label class="jr-stt-toggle">
+        <input type="checkbox" id="jr_sttEnable" onchange="jr_onSttToggle(this.checked)">
+        <span>Text aus Aufnahme transkribieren</span>
+      </label>
+      <div class="jr-stt-controls" id="jr_sttControls" style="display:none">
+        <button id="jr_sttStartBtn" class="toolbar-btn" onclick="jr_startTranscription()">Transkription starten</button>
+        <div id="jr_sttProgress" class="jr-stt-progress" style="display:none">Lade Sprachmodell&hellip;</div>
+        <textarea id="jr_sttText" class="jr-stt-textarea" placeholder="Transkribierter Text erscheint hier&hellip;" style="display:none"></textarea>
+        <div id="jr_sttError" class="jr-error" style="display:none"></div>
+      </div>
+    </div>
+
     <div class="jr-action-bar">
       <button class="toolbar-btn" onclick="jr_saveAsSong()">Als neuen Song speichern</button>
       <button class="toolbar-btn secondary" onclick="jr_resetForNewRecording()">Neu aufnehmen</button>
@@ -5265,14 +5360,17 @@ if ('serviceWorker' in navigator) {
   'use strict';
 
   const JR_STORAGE_KEY = 'jr_recordings';
+  const JR_MIN_DUR_KEY = 'jr_minChordDuration'; // seconds, float
   const JR_DEBUG_KEY = 'jr_debug';
   const JR_SAMPLE_INTERVAL_MS = 500;
-  const JR_MIN_CHORD_DURATION_MS = 1000;
+  const JR_DEFAULT_MIN_DUR_MS = 1000;
   const JR_FFT_SIZE = 4096;
   const JR_MIN_MIDI = 36; // C2
   const JR_MAX_MIDI = 84; // C6
   const JR_ENERGY_GATE = 0.08;
   const JR_MAX_STORED_RECORDINGS = 20;
+  const JR_TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+  const JR_WHISPER_MODEL = 'Xenova/whisper-tiny';
 
   const JR_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const JR_MAJOR_TEMPLATE = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0];
@@ -5291,10 +5389,21 @@ if ('serviceWorker' in navigator) {
     displayTimer: null,
     meterRaf: null,
     startTimeMs: 0,
+    totalDurationMs: 0,
     rawSamples: [],
     chordEvents: [],
     resultKey: null,
     resultBpm: null,
+    // Change 1: configurable min chord duration
+    minChordDurationMs: JR_DEFAULT_MIN_DUR_MS,
+    // Change 2: audio blob + STT state
+    mediaRecorder: null,
+    recordedChunks: [],
+    lastAudioBlob: null,
+    transcription: null,         // plain string
+    transcriptionChunks: null,   // array of { text, timestamp: [start, end] }
+    transcriberPipeline: null,   // cached whisper pipeline
+    transformersModule: null,    // cached dynamic-imported module
   };
 
   function jr_log() {
@@ -5319,12 +5428,54 @@ if ('serviceWorker' in navigator) {
 
   function jr_openView() {
     jr_resetForNewRecording();
+    jr_loadMinDur();
+    jr_initSttCapability();
     if (typeof setView === 'function') setView('jamRecorderView');
     if (!jr_isSupported()) {
       const warn = jr_$('jr_compatWarning');
       warn.textContent = 'Dein Browser unterstützt die benötigten Audio-APIs nicht. Bitte aktuellen Chrome, Firefox oder Safari verwenden.';
       warn.style.display = 'block';
       jr_$('jr_recordBtn').disabled = true;
+    }
+  }
+
+  // Change 1: min-duration slider
+  function jr_loadMinDur() {
+    const stored = parseFloat(localStorage.getItem(JR_MIN_DUR_KEY));
+    const sec = (isFinite(stored) && stored >= 0.2 && stored <= 3.0) ? stored : 1.0;
+    jr_state.minChordDurationMs = Math.round(sec * 1000);
+    const slider = jr_$('jr_minDurSlider');
+    const label = jr_$('jr_minDurValue');
+    if (slider) slider.value = String(sec);
+    if (label) label.textContent = sec.toFixed(1) + 's';
+  }
+
+  function jr_onMinDurChange(val) {
+    const sec = Math.max(0.2, Math.min(3.0, parseFloat(val)));
+    jr_state.minChordDurationMs = Math.round(sec * 1000);
+    const label = jr_$('jr_minDurValue');
+    if (label) label.textContent = sec.toFixed(1) + 's';
+    try { localStorage.setItem(JR_MIN_DUR_KEY, String(sec)); } catch (e) {}
+  }
+
+  // Change 2: STT capability check
+  function jr_hasWasm() {
+    return typeof window.WebAssembly !== 'undefined';
+  }
+
+  function jr_initSttCapability() {
+    const toggle = jr_$('jr_sttEnable');
+    const hint = jr_$('jr_sttSection');
+    if (!toggle || !hint) return;
+    if (!jr_hasWasm()) {
+      toggle.checked = false;
+      toggle.disabled = true;
+      const lbl = toggle.parentNode;
+      if (lbl && lbl.querySelector('span')) {
+        lbl.querySelector('span').textContent = 'Text aus Aufnahme transkribieren (Browser unterstützt kein WebAssembly)';
+      }
+    } else {
+      toggle.disabled = false;
     }
   }
 
@@ -5356,10 +5507,36 @@ if ('serviceWorker' in navigator) {
       jr_state.analyser.smoothingTimeConstant = 0.4;
       jr_state.micSource.connect(jr_state.analyser);
 
+      // Parallel capture as audio blob for optional STT (RAM only, no persistence)
+      jr_state.recordedChunks = [];
+      jr_state.lastAudioBlob = null;
+      jr_state.transcription = null;
+      jr_state.transcriptionChunks = null;
+      try {
+        if (typeof MediaRecorder !== 'undefined') {
+          const rec = new MediaRecorder(stream);
+          rec.ondataavailable = function (e) {
+            if (e.data && e.data.size > 0) jr_state.recordedChunks.push(e.data);
+          };
+          rec.onstop = function () {
+            if (jr_state.recordedChunks.length) {
+              jr_state.lastAudioBlob = new Blob(jr_state.recordedChunks, { type: rec.mimeType || 'audio/webm' });
+              jr_log('audio blob captured', jr_state.lastAudioBlob.size, 'bytes', rec.mimeType);
+            }
+          };
+          rec.start();
+          jr_state.mediaRecorder = rec;
+        }
+      } catch (e) {
+        jr_log('MediaRecorder not available', e);
+        jr_state.mediaRecorder = null;
+      }
+
       jr_state.rawSamples = [];
       jr_state.chordEvents = [];
       jr_state.resultKey = null;
       jr_state.resultBpm = null;
+      jr_state.totalDurationMs = 0;
       jr_state.startTimeMs = Date.now();
       jr_state.recording = true;
 
@@ -5384,9 +5561,15 @@ if ('serviceWorker' in navigator) {
   function jr_stopRecording() {
     if (!jr_state.recording) return;
     jr_state.recording = false;
+    jr_state.totalDurationMs = Date.now() - jr_state.startTimeMs;
     if (jr_state.sampleTimer) { clearInterval(jr_state.sampleTimer); jr_state.sampleTimer = null; }
     if (jr_state.displayTimer) { clearInterval(jr_state.displayTimer); jr_state.displayTimer = null; }
     if (jr_state.meterRaf) { cancelAnimationFrame(jr_state.meterRaf); jr_state.meterRaf = null; }
+
+    // Stop audio blob capture (if running); blob becomes available in rec.onstop
+    if (jr_state.mediaRecorder && jr_state.mediaRecorder.state !== 'inactive') {
+      try { jr_state.mediaRecorder.stop(); } catch (e) { jr_log('recorder stop err', e); }
+    }
 
     jr_$('jr_recordBtn').classList.remove('jr-recording');
     jr_$('jr_status').textContent = 'Analyse läuft...';
@@ -5540,13 +5723,14 @@ if ('serviceWorker' in navigator) {
         runs.push({ chord: s.chord, startMs: s.ts, endMs: s.ts });
       }
     }
-    // Step 2: merge runs shorter than MIN with a neighbor
-    let safety = 200;
+    // Step 2: merge runs shorter than the user-configured minimum with a neighbor
+    const minDurMs = jr_state.minChordDurationMs;
+    let safety = 500;
     while (safety-- > 0) {
       let merged = false;
       for (let i = 0; i < runs.length; i++) {
         const dur = runs[i].endMs - runs[i].startMs;
-        if (dur < JR_MIN_CHORD_DURATION_MS && runs.length > 1) {
+        if (dur < minDurMs && runs.length > 1) {
           if (i > 0) {
             runs[i - 1].endMs = runs[i].endMs;
             runs.splice(i, 1);
@@ -5667,6 +5851,142 @@ if ('serviceWorker' in navigator) {
     }, 0);
   }
 
+  // Change 2: Speech-to-Text — lazy load transformers.js + Whisper
+  function jr_onSttToggle(checked) {
+    const controls = jr_$('jr_sttControls');
+    if (!controls) return;
+    controls.style.display = checked ? 'flex' : 'none';
+    if (!checked) {
+      const err = jr_$('jr_sttError'); if (err) err.style.display = 'none';
+    }
+  }
+
+  async function jr_loadTransformers() {
+    if (jr_state.transformersModule) return jr_state.transformersModule;
+    jr_state.transformersModule = await import(JR_TRANSFORMERS_URL);
+    return jr_state.transformersModule;
+  }
+
+  async function jr_loadWhisper(onProgress) {
+    if (jr_state.transcriberPipeline) return jr_state.transcriberPipeline;
+    const mod = await jr_loadTransformers();
+    jr_state.transcriberPipeline = await mod.pipeline('automatic-speech-recognition', JR_WHISPER_MODEL, {
+      progress_callback: onProgress || null,
+      quantized: true,
+    });
+    return jr_state.transcriberPipeline;
+  }
+
+  async function jr_blobTo16kMonoPCM(blob) {
+    const arrayBuffer = await blob.arrayBuffer();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    // Request 16 kHz context so decodeAudioData resamples for us
+    let decodeCtx;
+    try { decodeCtx = new AC({ sampleRate: 16000 }); }
+    catch (e) { decodeCtx = new AC(); }
+    const audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer.slice(0));
+    const numChannels = audioBuffer.numberOfChannels;
+    const len = audioBuffer.length;
+    const mono = new Float32Array(len);
+    for (let c = 0; c < numChannels; c++) {
+      const data = audioBuffer.getChannelData(c);
+      for (let i = 0; i < len; i++) mono[i] += data[i];
+    }
+    if (numChannels > 1) {
+      for (let i = 0; i < len; i++) mono[i] /= numChannels;
+    }
+    // If context sample rate differs from 16k, manually linear-resample
+    let result = mono;
+    if (audioBuffer.sampleRate !== 16000) {
+      const ratio = audioBuffer.sampleRate / 16000;
+      const outLen = Math.floor(len / ratio);
+      result = new Float32Array(outLen);
+      for (let i = 0; i < outLen; i++) {
+        const srcIdx = i * ratio;
+        const i0 = Math.floor(srcIdx);
+        const i1 = Math.min(len - 1, i0 + 1);
+        const t = srcIdx - i0;
+        result[i] = mono[i0] * (1 - t) + mono[i1] * t;
+      }
+    }
+    try { decodeCtx.close(); } catch (e) {}
+    return result;
+  }
+
+  function jr_setSttStatus(msg) {
+    const prog = jr_$('jr_sttProgress');
+    if (!prog) return;
+    prog.textContent = msg;
+    prog.style.display = msg ? 'flex' : 'none';
+  }
+
+  function jr_showSttError(msg) {
+    const err = jr_$('jr_sttError');
+    if (!err) return;
+    err.innerHTML = jr_escape(msg) + ' <button type="button" class="toolbar-btn secondary" style="margin-top:6px" onclick="jr_startTranscription()">Erneut versuchen</button>';
+    err.style.display = 'block';
+  }
+
+  async function jr_startTranscription() {
+    if (!jr_hasWasm()) { jr_showSttError('Browser unterstützt kein WebAssembly.'); return; }
+    if (!jr_state.lastAudioBlob) {
+      jr_showSttError('Keine Audio-Aufnahme gefunden. Bitte erst eine Aufnahme machen.');
+      return;
+    }
+    const startBtn = jr_$('jr_sttStartBtn');
+    const textarea = jr_$('jr_sttText');
+    const errBox = jr_$('jr_sttError');
+    if (errBox) errBox.style.display = 'none';
+    if (textarea) { textarea.style.display = 'none'; textarea.value = ''; }
+    if (startBtn) startBtn.disabled = true;
+
+    try {
+      jr_setSttStatus('Lade Sprachmodell…');
+      jr_log('loading whisper model');
+      const transcriber = await jr_loadWhisper(function (data) {
+        if (data && data.status === 'progress' && typeof data.progress === 'number') {
+          jr_setSttStatus('Lade Sprachmodell… ' + Math.round(data.progress) + '%');
+        } else if (data && data.status === 'done') {
+          jr_setSttStatus('Modell geladen, decodiere Audio…');
+        }
+      });
+
+      jr_setSttStatus('Decodiere Audio…');
+      const pcm = await jr_blobTo16kMonoPCM(jr_state.lastAudioBlob);
+      jr_log('pcm ready', pcm.length, 'samples');
+
+      jr_setSttStatus('Transkribiere…');
+      const result = await transcriber(pcm, {
+        language: 'german',
+        task: 'transcribe',
+        return_timestamps: 'word',
+        chunk_length_s: 30,
+        stride_length_s: 5,
+      });
+      jr_log('transcription done', result);
+
+      const text = (result && typeof result.text === 'string') ? result.text.trim() : '';
+      jr_state.transcription = text;
+      jr_state.transcriptionChunks = (result && Array.isArray(result.chunks)) ? result.chunks : null;
+
+      jr_setSttStatus('');
+      if (textarea) {
+        textarea.value = text;
+        textarea.style.display = 'block';
+        textarea.addEventListener('input', function () { jr_state.transcription = textarea.value; }, { once: false });
+      }
+    } catch (err) {
+      jr_log('transcription error', err);
+      jr_setSttStatus('');
+      const msg = (err && (err.message || err.name)) || String(err);
+      jr_showSttError('Transkription fehlgeschlagen: ' + msg);
+      // Allow manual entry even on failure
+      if (textarea) { textarea.style.display = 'block'; textarea.value = ''; }
+    } finally {
+      if (startBtn) startBtn.disabled = false;
+    }
+  }
+
   function jr_persistRecording() {
     try {
       let recordings = [];
@@ -5693,12 +6013,24 @@ if ('serviceWorker' in navigator) {
     jr_state.chordEvents = [];
     jr_state.resultKey = null;
     jr_state.resultBpm = null;
+    jr_state.totalDurationMs = 0;
+    // Drop audio blob + any transcription state (RAM only — nothing to purge on disk)
+    jr_state.recordedChunks = [];
+    jr_state.lastAudioBlob = null;
+    jr_state.transcription = null;
+    jr_state.transcriptionChunks = null;
     const timer = jr_$('jr_timer'); if (timer) timer.textContent = '00:00';
     const status = jr_$('jr_status'); if (status) status.textContent = 'Bereit';
     const live = jr_$('jr_liveChord'); if (live) live.textContent = '–';
     const liveSec = jr_$('jr_liveSection'); if (liveSec) liveSec.style.display = 'none';
     const resSec = jr_$('jr_resultSection'); if (resSec) resSec.style.display = 'none';
     const warn = jr_$('jr_compatWarning'); if (warn) warn.style.display = 'none';
+    // Reset STT UI to its untouched state
+    const sttToggle = jr_$('jr_sttEnable'); if (sttToggle) sttToggle.checked = false;
+    const sttControls = jr_$('jr_sttControls'); if (sttControls) sttControls.style.display = 'none';
+    const sttProg = jr_$('jr_sttProgress'); if (sttProg) { sttProg.style.display = 'none'; sttProg.textContent = ''; }
+    const sttText = jr_$('jr_sttText'); if (sttText) { sttText.style.display = 'none'; sttText.value = ''; }
+    const sttErr = jr_$('jr_sttError'); if (sttErr) { sttErr.style.display = 'none'; sttErr.innerHTML = ''; }
     const btn = jr_$('jr_recordBtn');
     if (btn) { btn.classList.remove('jr-recording'); btn.disabled = !jr_isSupported(); }
   }
@@ -5714,29 +6046,60 @@ if ('serviceWorker' in navigator) {
         ? uid()
         : (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
     };
-    const chords = jr_state.chordEvents.map(function (ev, i) {
-      return { id: mkId(), chord: ev.chord, charIndex: i };
-    });
+
+    // Prefer current textarea contents, fall back to state (in case user edited)
+    const sttTextEl = jr_$('jr_sttText');
+    const transcribedRaw = sttTextEl && sttTextEl.value ? sttTextEl.value : (jr_state.transcription || '');
+    const transcribed = transcribedRaw.replace(/\s+/g, ' ').trim();
+
+    let lineText = '';
+    let chords;
+    if (transcribed) {
+      // Text line with chords placed by proportional time-to-char mapping
+      lineText = transcribed;
+      const totalMs = jr_state.totalDurationMs ||
+        (jr_state.chordEvents.length
+          ? jr_state.chordEvents[jr_state.chordEvents.length - 1].endMs
+          : 1);
+      const textLen = lineText.length;
+      const placedAt = {};
+      chords = jr_state.chordEvents.map(function (ev) {
+        let idx = Math.max(0, Math.min(textLen, Math.floor((ev.startMs / totalMs) * textLen)));
+        while (placedAt[idx] && idx < textLen) idx++;
+        placedAt[idx] = true;
+        return { id: mkId(), chord: ev.chord, charIndex: idx };
+      });
+    } else {
+      // No transcription — keep legacy sequential placement on an empty text line
+      chords = jr_state.chordEvents.map(function (ev, i) {
+        return { id: mkId(), chord: ev.chord, charIndex: i };
+      });
+    }
+
+    const notes = transcribed
+      ? 'Automatisch erzeugt vom Jam Recorder (Beta). Tonart und Liedtext sind Schätzungen — bitte prüfen.'
+      : 'Automatisch erzeugt vom Jam Recorder (Beta). Tonart und BPM sind Schätzungen.';
+
     const song = {
       id: mkId(),
       title: title,
       key: jr_state.resultKey || 'C',
       bpm: null,
       createdAt: now.toISOString(),
-      notes: 'Automatisch erzeugt vom Jam Recorder (Beta). Tonart und BPM sind Schätzungen.',
+      notes: notes,
       history: [],
       sections: [{
         id: mkId(),
         type: 'Verse',
         label: 'Jam',
-        lines: [{ id: mkId(), text: '', chords: chords }],
+        lines: [{ id: mkId(), text: lineText, chords: chords }],
         _spacerChords: {}
       }]
     };
     if (typeof songs !== 'undefined' && Array.isArray(songs) && typeof saveSongs === 'function') {
       songs.unshift(song);
       saveSongs();
-      jr_log('saved as song', song.id);
+      jr_log('saved as song', song.id, 'withText=', !!transcribed);
       if (typeof showSong === 'function') {
         showSong(song.id);
         return;
@@ -5753,6 +6116,9 @@ if ('serviceWorker' in navigator) {
   window.jr_toggleRecording = jr_toggleRecording;
   window.jr_resetForNewRecording = jr_resetForNewRecording;
   window.jr_saveAsSong = jr_saveAsSong;
+  window.jr_onMinDurChange = jr_onMinDurChange;
+  window.jr_onSttToggle = jr_onSttToggle;
+  window.jr_startTranscription = jr_startTranscription;
 })();
 </script>
 </body>
