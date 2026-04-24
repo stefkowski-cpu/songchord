@@ -2858,8 +2858,9 @@ function updatePositionEditorUI() {
   document.getElementById('posEditorRight').disabled = pos >= max;
   document.getElementById('posEditorLineStart').disabled = pos <= 0;
   const text = editingChord.isSpacer ? '' : getEditingLineText();
-  document.getElementById('posEditorPrevWord').disabled = !text || pos <= 0;
-  document.getElementById('posEditorNextWord').disabled = !text || pos >= max;
+  const hasWords = !!text && getWordStarts(text).length > 0;
+  document.getElementById('posEditorPrevWord').disabled = !hasWords || pos <= 0;
+  document.getElementById('posEditorNextWord').disabled = !hasWords || pos >= text.length;
 }
 
 function setPositionStep(n) {
@@ -2903,23 +2904,31 @@ function applyEditingChordPosition(newPos) {
   updatePositionEditorUI();
 }
 
+function getWordStarts(text) {
+  const starts = [];
+  if (!text || text.length === 0) return starts;
+  if (!/\s/.test(text[0])) starts.push(0);
+  for (let i = 1; i < text.length; i++) {
+    if (/\s/.test(text[i - 1]) && !/\s/.test(text[i])) starts.push(i);
+  }
+  return starts;
+}
+
 function findPrevWordStart(text, cur) {
-  if (!text) return 0;
-  const clamp = Math.min(cur, text.length);
-  let i = clamp - 1;
-  while (i > 0 && /\s/.test(text[i])) i--;
-  while (i > 0 && !/\s/.test(text[i - 1])) i--;
-  if (i < 0) i = 0;
-  return i;
+  const starts = getWordStarts(text);
+  if (!starts.length) return cur;
+  for (let i = starts.length - 1; i >= 0; i--) {
+    if (starts[i] < cur) return starts[i];
+  }
+  return 0;
 }
 
 function findNextWordStart(text, cur, max) {
-  if (!text) return max;
-  let i = Math.max(0, cur);
-  while (i < text.length && !/\s/.test(text[i])) i++;
-  while (i < text.length && /\s/.test(text[i])) i++;
-  if (i >= text.length) return Math.min(max, text.length);
-  return i;
+  const starts = getWordStarts(text);
+  if (!starts.length) return cur;
+  const next = starts.find(s => s > cur);
+  if (next !== undefined) return next;
+  return Math.min(max, text.length);
 }
 
 function updateAutocomplete() {
