@@ -1214,6 +1214,135 @@ body.light-mode .prefs-reset-btn { border-color: #ccc; color: #999; }
 }
 .settings-btn:active { border-color: #e94560; color: #f0ece2; }
 body.light-mode .settings-btn { border-color: #ddd; color: #999; }
+
+/* ===== JAM RECORDER (BETA) — isolated module ===== */
+.jr-beta-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 4px;
+  background: #f0a500; color: #fff; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  vertical-align: middle; margin-left: 6px;
+}
+.jr-entry-btn { background: #16213e; color: #f0ece2; border: 1px solid #f0a500; }
+.jr-entry-btn:hover { background: #1f2d4d; }
+
+.jr-view-header {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; padding-top: 4px;
+}
+.jr-view-header h2 { font-size: 20px; color: #f0ece2; margin: 0; }
+.jr-view-header .jr-back-btn {
+  background: none; border: none; color: #f0ece2; font-size: 22px;
+  cursor: pointer; padding: 4px 8px; margin-right: 4px;
+}
+.jr-hint-text { color: #7a7a9a; font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+
+.jr-error {
+  background: rgba(240,165,0,0.12); border: 1px solid #f0a500;
+  color: #f0ece2; padding: 10px 12px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 12px;
+}
+
+.jr-control-section {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 20px 0;
+}
+.jr-timer {
+  font-family: 'Courier Prime', monospace; font-size: 32px; font-weight: 700;
+  color: #f0ece2;
+}
+.jr-record-btn {
+  width: 96px; height: 96px; border-radius: 50%;
+  border: 4px solid #4a4a6a; background: #2a2a4a;
+  cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease;
+  position: relative;
+}
+.jr-record-btn::before {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #e94560;
+  transform: translate(-50%, -50%);
+  transition: transform 0.15s ease, border-radius 0.15s ease, width 0.15s ease, height 0.15s ease;
+}
+.jr-record-btn:hover::before { transform: translate(-50%, -50%) scale(1.08); }
+.jr-record-btn.jr-recording { border-color: #e94560; animation: jr-pulse 1.3s ease-in-out infinite; }
+.jr-record-btn.jr-recording::before { border-radius: 6px; width: 28px; height: 28px; }
+.jr-record-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+@keyframes jr-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(233,69,96,0.55); }
+  50% { box-shadow: 0 0 0 18px rgba(233,69,96,0); }
+}
+
+.jr-status-label { color: #7a7a9a; font-size: 13px; }
+
+.jr-live-section {
+  margin-top: 14px; padding: 14px;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 10px;
+  display: flex; flex-direction: column; gap: 10px; align-items: center;
+}
+.jr-live-meter {
+  width: 100%; max-width: 320px; height: 48px;
+  background: #1a1a2e; border-radius: 6px;
+}
+.jr-live-chord {
+  font-family: 'Courier Prime', monospace; font-weight: 700;
+  font-size: 40px; color: #e94560; min-height: 48px; line-height: 1;
+}
+
+.jr-result-section {
+  margin-top: 20px; padding: 14px;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 10px;
+}
+.jr-result-summary {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 13px; color: #7a7a9a; margin-bottom: 12px;
+}
+.jr-result-summary b { color: #f0ece2; font-family: 'Courier Prime', monospace; }
+.jr-chord-timeline {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+}
+.jr-chord-chip {
+  position: relative; background: #1a1a2e; color: #f0ece2;
+  border: 1px solid #2a2a4a; border-radius: 6px;
+  padding: 6px 10px; font-family: 'Courier Prime', monospace;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px;
+}
+.jr-chord-chip:hover { border-color: #e94560; }
+.jr-chord-chip b { font-size: 15px; }
+.jr-chord-chip span { color: #7a7a9a; font-size: 11px; }
+
+.jr-chord-dropdown {
+  position: absolute; top: 100%; left: 0; z-index: 50;
+  background: #222244; border: 1px solid #4a4a6a; border-radius: 8px;
+  padding: 6px; box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  min-width: 220px; margin-top: 4px;
+}
+.jr-chord-dropdown-opt {
+  background: #1a1a2e; color: #f0ece2; border: 1px solid #2a2a4a;
+  padding: 6px 8px; border-radius: 4px; font-size: 13px;
+  font-family: 'Courier Prime', monospace; cursor: pointer;
+  min-width: 44px; min-height: 32px;
+}
+.jr-chord-dropdown-opt:hover { background: #0f3460; border-color: #e94560; }
+
+.jr-action-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.jr-action-bar .toolbar-btn { flex: 1; min-width: 140px; }
+.jr-empty { color: #7a7a9a; font-style: italic; padding: 12px; }
+
+body.light-mode .jr-entry-btn { background: #fff; color: #1a1a2e; border-color: #f0a500; }
+body.light-mode .jr-entry-btn:hover { background: #faf7ed; }
+body.light-mode .jr-view-header h2 { color: #1a1a2e; }
+body.light-mode .jr-view-header .jr-back-btn { color: #1a1a2e; }
+body.light-mode .jr-record-btn { background: #e0e0d8; border-color: #bbb; }
+body.light-mode .jr-live-section, body.light-mode .jr-result-section { background: #fff; border-color: #ddd; }
+body.light-mode .jr-result-summary b { color: #1a1a2e; }
+body.light-mode .jr-live-meter { background: #fff; }
+body.light-mode .jr-chord-chip { background: #f5f5f0; color: #1a1a2e; border-color: #ddd; }
+body.light-mode .jr-chord-dropdown { background: #fff; border-color: #ddd; }
+body.light-mode .jr-chord-dropdown-opt { background: #f5f5f0; color: #1a1a2e; border-color: #ddd; }
+body.light-mode .jr-chord-dropdown-opt:hover { background: #faeef0; }
 </style>
 </head>
 <body>
@@ -1232,6 +1361,7 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
     <button class="toolbar-btn secondary" onclick="createFolder()">+ Ordner</button>
     <button class="toolbar-btn secondary" onclick="showImportModal()">+ Import</button>
     <button class="toolbar-btn secondary" onclick="exportAllSongs()">&#11015; Backup</button>
+    <button class="toolbar-btn jr-entry-btn" onclick="jr_openView()">&#127908; Jam Recorder<span class="jr-beta-badge">Beta</span></button>
   </div>
   <div id="songListContainer"></div>
   <button class="settings-btn" onclick="openPrefsSheet()">&#9881; Einstellungen</button>
@@ -1506,6 +1636,43 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
   <div class="jam-text-overlay" id="jamTextOverlay">
     <button class="jam-overlay-close" onclick="closeJamSongOverlay()">&times;</button>
     <div id="jamOverlayContent"></div>
+  </div>
+</div>
+
+<!-- JAM RECORDER VIEW (BETA) — isolated module -->
+<div class="view" id="jamRecorderView">
+  <div class="jr-view-header">
+    <button class="jr-back-btn" onclick="jr_close()" aria-label="Zur&uuml;ck">&lsaquo;</button>
+    <h2>Jam Recorder</h2>
+    <span class="jr-beta-badge">Beta</span>
+  </div>
+  <p class="jr-hint-text">Nimm deine Jam-Session auf. Das Modul erkennt automatisch die Akkordfolge. Funktioniert am besten mit klarem Solo-Instrument (Gitarre, Piano).</p>
+
+  <div id="jr_compatWarning" class="jr-error" style="display:none"></div>
+
+  <div class="jr-control-section">
+    <div class="jr-timer" id="jr_timer">00:00</div>
+    <button id="jr_recordBtn" class="jr-record-btn" onclick="jr_toggleRecording()" aria-label="Aufnahme starten/stoppen"></button>
+    <div class="jr-status-label" id="jr_status">Bereit</div>
+  </div>
+
+  <div class="jr-live-section" id="jr_liveSection" style="display:none">
+    <canvas class="jr-live-meter" id="jr_meter" width="320" height="48"></canvas>
+    <div class="jr-live-chord" id="jr_liveChord">&ndash;</div>
+  </div>
+
+  <div class="jr-result-section" id="jr_resultSection" style="display:none">
+    <div class="jr-result-summary">
+      <span>Tonart: <b id="jr_resultKey">&ndash;</b></span>
+      <span>BPM: <b id="jr_resultBpm">&ndash;</b></span>
+      <span>Akkorde: <b id="jr_resultCount">0</b></span>
+    </div>
+    <div class="jr-chord-timeline" id="jr_resultTimeline"></div>
+    <div class="jr-action-bar">
+      <button class="toolbar-btn" onclick="jr_saveAsSong()">Als neuen Song speichern</button>
+      <button class="toolbar-btn secondary" onclick="jr_resetForNewRecording()">Neu aufnehmen</button>
+      <button class="toolbar-btn secondary" onclick="jr_close()">Zur&uuml;ck</button>
+    </div>
   </div>
 </div>
 
@@ -5087,6 +5254,506 @@ if ('serviceWorker' in navigator) {
       .catch(e => console.warn('SW fehler:', e));
   });
 }
+
+// ===============================================
+// JAM RECORDER (BETA) — isolated module
+// All state/functions/CSS classes are namespaced with jr_/.jr-
+// Uses existing globals (uid, songs, saveSongs, showSong, setView, navigateBack)
+// READ-ONLY — does not modify any existing function or variable.
+// ===============================================
+(function () {
+  'use strict';
+
+  const JR_STORAGE_KEY = 'jr_recordings';
+  const JR_DEBUG_KEY = 'jr_debug';
+  const JR_SAMPLE_INTERVAL_MS = 500;
+  const JR_MIN_CHORD_DURATION_MS = 1000;
+  const JR_FFT_SIZE = 4096;
+  const JR_MIN_MIDI = 36; // C2
+  const JR_MAX_MIDI = 84; // C6
+  const JR_ENERGY_GATE = 0.08;
+  const JR_MAX_STORED_RECORDINGS = 20;
+
+  const JR_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const JR_MAJOR_TEMPLATE = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0];
+  const JR_MINOR_TEMPLATE = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0];
+  // Krumhansl-Schmuckler key profiles (classical)
+  const JR_KS_MAJOR = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+  const JR_KS_MINOR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+
+  const jr_state = {
+    recording: false,
+    audioContext: null,
+    analyser: null,
+    micStream: null,
+    micSource: null,
+    sampleTimer: null,
+    displayTimer: null,
+    meterRaf: null,
+    startTimeMs: 0,
+    rawSamples: [],
+    chordEvents: [],
+    resultKey: null,
+    resultBpm: null,
+  };
+
+  function jr_log() {
+    if (localStorage.getItem(JR_DEBUG_KEY) === '1' || window.jr_debug) {
+      const args = ['[JR]'].concat(Array.prototype.slice.call(arguments));
+      console.log.apply(console, args);
+    }
+  }
+
+  function jr_isSupported() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia &&
+      (window.AudioContext || window.webkitAudioContext));
+  }
+
+  function jr_$(id) { return document.getElementById(id); }
+
+  function jr_escape(s) {
+    const div = document.createElement('div');
+    div.textContent = String(s == null ? '' : s);
+    return div.innerHTML;
+  }
+
+  function jr_openView() {
+    jr_resetForNewRecording();
+    if (typeof setView === 'function') setView('jamRecorderView');
+    if (!jr_isSupported()) {
+      const warn = jr_$('jr_compatWarning');
+      warn.textContent = 'Dein Browser unterstützt die benötigten Audio-APIs nicht. Bitte aktuellen Chrome, Firefox oder Safari verwenden.';
+      warn.style.display = 'block';
+      jr_$('jr_recordBtn').disabled = true;
+    }
+  }
+
+  function jr_close() {
+    if (jr_state.recording) jr_stopRecording();
+    if (typeof navigateBack === 'function') navigateBack();
+    else if (typeof showSongList === 'function') showSongList();
+  }
+
+  function jr_toggleRecording() {
+    if (jr_state.recording) jr_stopRecording();
+    else jr_startRecording();
+  }
+
+  function jr_startRecording() {
+    if (!jr_isSupported()) { jr_openView(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    try {
+      jr_state.audioContext = new AC();
+    } catch (err) {
+      jr_showError('Audio-Kontext konnte nicht erstellt werden: ' + (err.message || err.name));
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      jr_state.micStream = stream;
+      jr_state.micSource = jr_state.audioContext.createMediaStreamSource(stream);
+      jr_state.analyser = jr_state.audioContext.createAnalyser();
+      jr_state.analyser.fftSize = JR_FFT_SIZE;
+      jr_state.analyser.smoothingTimeConstant = 0.4;
+      jr_state.micSource.connect(jr_state.analyser);
+
+      jr_state.rawSamples = [];
+      jr_state.chordEvents = [];
+      jr_state.resultKey = null;
+      jr_state.resultBpm = null;
+      jr_state.startTimeMs = Date.now();
+      jr_state.recording = true;
+
+      jr_$('jr_recordBtn').classList.add('jr-recording');
+      jr_$('jr_status').textContent = 'Aufnahme läuft...';
+      jr_$('jr_liveSection').style.display = 'flex';
+      jr_$('jr_resultSection').style.display = 'none';
+      jr_$('jr_liveChord').textContent = '–';
+      jr_$('jr_compatWarning').style.display = 'none';
+
+      jr_state.displayTimer = setInterval(jr_updateTimer, 250);
+      jr_state.sampleTimer = setInterval(jr_takeSample, JR_SAMPLE_INTERVAL_MS);
+      jr_state.meterRaf = requestAnimationFrame(jr_drawMeter);
+      jr_log('recording started', { sampleRate: jr_state.audioContext.sampleRate });
+    }).catch(function (err) {
+      jr_log('getUserMedia error', err);
+      jr_showError('Mikrofon-Zugriff verweigert oder nicht verfügbar. Bitte die Browser-Einstellungen prüfen und die Seite neu laden.');
+      jr_cleanupAudio();
+    });
+  }
+
+  function jr_stopRecording() {
+    if (!jr_state.recording) return;
+    jr_state.recording = false;
+    if (jr_state.sampleTimer) { clearInterval(jr_state.sampleTimer); jr_state.sampleTimer = null; }
+    if (jr_state.displayTimer) { clearInterval(jr_state.displayTimer); jr_state.displayTimer = null; }
+    if (jr_state.meterRaf) { cancelAnimationFrame(jr_state.meterRaf); jr_state.meterRaf = null; }
+
+    jr_$('jr_recordBtn').classList.remove('jr-recording');
+    jr_$('jr_status').textContent = 'Analyse läuft...';
+
+    // Defer so the UI can paint the "Analyse läuft..." state
+    setTimeout(function () {
+      jr_processResults();
+      jr_renderResults();
+      jr_persistRecording();
+      jr_cleanupAudio();
+      jr_$('jr_status').textContent = jr_state.chordEvents.length ? 'Fertig' : 'Keine Akkorde erkannt';
+      jr_$('jr_liveSection').style.display = 'none';
+    }, 20);
+  }
+
+  function jr_cleanupAudio() {
+    try { if (jr_state.micSource) jr_state.micSource.disconnect(); } catch (e) {}
+    if (jr_state.micStream) jr_state.micStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+    if (jr_state.audioContext && jr_state.audioContext.state !== 'closed') {
+      jr_state.audioContext.close().catch(function () {});
+    }
+    jr_state.micSource = null;
+    jr_state.micStream = null;
+    jr_state.audioContext = null;
+    jr_state.analyser = null;
+  }
+
+  function jr_showError(msg) {
+    const warn = jr_$('jr_compatWarning');
+    warn.textContent = msg;
+    warn.style.display = 'block';
+    jr_$('jr_status').textContent = 'Fehler';
+    jr_$('jr_recordBtn').classList.remove('jr-recording');
+  }
+
+  function jr_updateTimer() {
+    if (!jr_state.recording) return;
+    const elapsed = Date.now() - jr_state.startTimeMs;
+    const s = Math.floor(elapsed / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    jr_$('jr_timer').textContent = mm + ':' + ss;
+  }
+
+  function jr_computeChroma() {
+    if (!jr_state.analyser || !jr_state.audioContext) return null;
+    const bufferLen = jr_state.analyser.frequencyBinCount;
+    const data = new Float32Array(bufferLen);
+    jr_state.analyser.getFloatFrequencyData(data);
+    const sampleRate = jr_state.audioContext.sampleRate;
+    const binWidth = sampleRate / JR_FFT_SIZE;
+    const chroma = new Array(12).fill(0);
+    for (let i = 1; i < bufferLen; i++) {
+      const freq = i * binWidth;
+      if (freq < 55 || freq > 2200) continue;
+      const midi = 12 * Math.log2(freq / 440) + 69;
+      if (midi < JR_MIN_MIDI || midi > JR_MAX_MIDI) continue;
+      const pc = ((Math.round(midi) % 12) + 12) % 12;
+      const db = data[i];
+      if (!isFinite(db) || db < -80) continue;
+      const mag = Math.pow(10, db / 20);
+      chroma[pc] += mag;
+    }
+    const max = Math.max.apply(null, chroma);
+    if (max > 0) for (let i = 0; i < 12; i++) chroma[i] /= max;
+    return chroma;
+  }
+
+  function jr_cosineSim(a, b) {
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+    if (na === 0 || nb === 0) return 0;
+    return dot / (Math.sqrt(na) * Math.sqrt(nb));
+  }
+
+  function jr_rotateTemplate(tmpl, shift) {
+    const out = new Array(12);
+    for (let i = 0; i < 12; i++) out[i] = tmpl[((i - shift) % 12 + 12) % 12];
+    return out;
+  }
+
+  function jr_matchChord(chroma) {
+    const matches = [];
+    for (let root = 0; root < 12; root++) {
+      const maj = jr_rotateTemplate(JR_MAJOR_TEMPLATE, root);
+      const min = jr_rotateTemplate(JR_MINOR_TEMPLATE, root);
+      matches.push({ chord: JR_NOTE_NAMES[root], score: jr_cosineSim(chroma, maj) });
+      matches.push({ chord: JR_NOTE_NAMES[root] + 'm', score: jr_cosineSim(chroma, min) });
+    }
+    matches.sort(function (a, b) { return b.score - a.score; });
+    return { chord: matches[0].chord, score: matches[0].score, top: matches.slice(0, 3) };
+  }
+
+  function jr_takeSample() {
+    if (!jr_state.recording) return;
+    const chroma = jr_computeChroma();
+    if (!chroma) return;
+    const energy = chroma.reduce(function (s, v) { return s + v; }, 0);
+    if (energy < JR_ENERGY_GATE) {
+      jr_log('sample skipped (silent)', energy.toFixed(3));
+      return;
+    }
+    const match = jr_matchChord(chroma);
+    const ts = Date.now() - jr_state.startTimeMs;
+    jr_state.rawSamples.push({ chord: match.chord, ts: ts, score: match.score });
+    jr_$('jr_liveChord').textContent = match.chord;
+    jr_log('sample', match.chord, match.score.toFixed(3), 'top:', match.top);
+  }
+
+  function jr_drawMeter() {
+    if (!jr_state.recording || !jr_state.analyser) return;
+    const canvas = jr_$('jr_meter');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const bufferLen = jr_state.analyser.fftSize;
+    const data = new Uint8Array(bufferLen);
+    jr_state.analyser.getByteTimeDomainData(data);
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#e94560';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < w; i++) {
+      const idx = Math.floor(i / w * bufferLen);
+      const v = (data[idx] - 128) / 128;
+      const y = h / 2 + v * h / 2;
+      if (i === 0) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+    }
+    ctx.stroke();
+    jr_state.meterRaf = requestAnimationFrame(jr_drawMeter);
+  }
+
+  function jr_processResults() {
+    const samples = jr_state.rawSamples;
+    if (!samples.length) {
+      jr_state.chordEvents = [];
+      jr_state.resultKey = null;
+      return;
+    }
+    // Step 1: collapse same-chord neighbors into runs
+    const runs = [];
+    for (let i = 0; i < samples.length; i++) {
+      const s = samples[i];
+      if (runs.length && runs[runs.length - 1].chord === s.chord) {
+        runs[runs.length - 1].endMs = s.ts;
+      } else {
+        runs.push({ chord: s.chord, startMs: s.ts, endMs: s.ts });
+      }
+    }
+    // Step 2: merge runs shorter than MIN with a neighbor
+    let safety = 200;
+    while (safety-- > 0) {
+      let merged = false;
+      for (let i = 0; i < runs.length; i++) {
+        const dur = runs[i].endMs - runs[i].startMs;
+        if (dur < JR_MIN_CHORD_DURATION_MS && runs.length > 1) {
+          if (i > 0) {
+            runs[i - 1].endMs = runs[i].endMs;
+            runs.splice(i, 1);
+          } else {
+            runs[i + 1].startMs = runs[i].startMs;
+            runs.splice(i, 1);
+          }
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) break;
+    }
+    // Step 3: re-collapse adjacents that ended up with the same chord
+    for (let i = runs.length - 1; i > 0; i--) {
+      if (runs[i].chord === runs[i - 1].chord) {
+        runs[i - 1].endMs = runs[i].endMs;
+        runs.splice(i, 1);
+      }
+    }
+    jr_state.chordEvents = runs;
+    jr_state.resultKey = jr_estimateKey(runs);
+    jr_state.resultBpm = null; // BPM estimation intentionally not implemented
+  }
+
+  function jr_estimateKey(runs) {
+    if (!runs.length) return null;
+    const hist = new Array(12).fill(0);
+    for (let i = 0; i < runs.length; i++) {
+      const r = runs[i];
+      const weight = Math.max(0.25, (r.endMs - r.startMs) / 1000);
+      const m = r.chord.match(/^([A-G]#?)/);
+      if (!m) continue;
+      const root = JR_NOTE_NAMES.indexOf(m[1]);
+      if (root < 0) continue;
+      const isMinor = /m$/.test(r.chord);
+      hist[root] += weight * 3;
+      hist[(root + 7) % 12] += weight * 1.5;
+      hist[(root + (isMinor ? 3 : 4)) % 12] += weight * 1.5;
+    }
+    let best = null;
+    for (let k = 0; k < 12; k++) {
+      const majRot = jr_rotateTemplate(JR_KS_MAJOR, k);
+      const minRot = jr_rotateTemplate(JR_KS_MINOR, k);
+      const majScore = jr_cosineSim(hist, majRot);
+      const minScore = jr_cosineSim(hist, minRot);
+      if (!best || majScore > best.score) best = { key: JR_NOTE_NAMES[k], score: majScore };
+      if (!best || minScore > best.score) best = { key: JR_NOTE_NAMES[k] + 'm', score: minScore };
+    }
+    return best ? best.key : null;
+  }
+
+  function jr_fmtTime(ms) {
+    const s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function jr_renderResults() {
+    jr_$('jr_resultKey').textContent = jr_state.resultKey || '–';
+    jr_$('jr_resultBpm').textContent = jr_state.resultBpm || '–';
+    jr_$('jr_resultCount').textContent = String(jr_state.chordEvents.length);
+    const timeline = jr_$('jr_resultTimeline');
+    timeline.innerHTML = '';
+    if (!jr_state.chordEvents.length) {
+      timeline.innerHTML = '<div class="jr-empty">Keine Akkorde erkannt. Probiere es erneut mit einem klareren Instrument.</div>';
+      jr_$('jr_resultSection').style.display = 'block';
+      return;
+    }
+    jr_state.chordEvents.forEach(function (ev, idx) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'jr-chord-chip';
+      chip.dataset.idx = String(idx);
+      chip.innerHTML = '<b>' + jr_escape(ev.chord) + '</b><span>' + jr_fmtTime(ev.startMs) + '</span>';
+      chip.addEventListener('click', function (e) {
+        e.stopPropagation();
+        jr_openCorrectDropdown(idx, chip);
+      });
+      timeline.appendChild(chip);
+    });
+    jr_$('jr_resultSection').style.display = 'block';
+  }
+
+  function jr_openCorrectDropdown(idx, anchorEl) {
+    const existing = document.querySelector('.jr-chord-dropdown');
+    if (existing) existing.remove();
+    const dd = document.createElement('div');
+    dd.className = 'jr-chord-dropdown';
+    const options = [];
+    for (let r = 0; r < 12; r++) {
+      options.push(JR_NOTE_NAMES[r]);
+      options.push(JR_NOTE_NAMES[r] + 'm');
+    }
+    options.forEach(function (c) {
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'jr-chord-dropdown-opt';
+      opt.textContent = c;
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        jr_state.chordEvents[idx].chord = c;
+        dd.remove();
+        jr_state.resultKey = jr_estimateKey(jr_state.chordEvents);
+        jr_renderResults();
+        jr_persistRecording();
+      });
+      dd.appendChild(opt);
+    });
+    anchorEl.appendChild(dd);
+    setTimeout(function () {
+      const onDocClick = function (e) {
+        if (!dd.contains(e.target)) {
+          dd.remove();
+          document.removeEventListener('click', onDocClick, true);
+        }
+      };
+      document.addEventListener('click', onDocClick, true);
+    }, 0);
+  }
+
+  function jr_persistRecording() {
+    try {
+      let recordings = [];
+      try { recordings = JSON.parse(localStorage.getItem(JR_STORAGE_KEY) || '[]'); } catch (e) { recordings = []; }
+      const entry = {
+        id: (typeof uid === 'function' ? uid() : Date.now().toString(36)),
+        createdAt: new Date().toISOString(),
+        key: jr_state.resultKey,
+        bpm: jr_state.resultBpm,
+        chordEvents: jr_state.chordEvents,
+      };
+      recordings.unshift(entry);
+      while (recordings.length > JR_MAX_STORED_RECORDINGS) recordings.pop();
+      localStorage.setItem(JR_STORAGE_KEY, JSON.stringify(recordings));
+      jr_log('persisted recording', entry.id, 'total:', recordings.length);
+    } catch (e) {
+      jr_log('persist error', e);
+    }
+  }
+
+  function jr_resetForNewRecording() {
+    if (jr_state.recording) jr_stopRecording();
+    jr_state.rawSamples = [];
+    jr_state.chordEvents = [];
+    jr_state.resultKey = null;
+    jr_state.resultBpm = null;
+    const timer = jr_$('jr_timer'); if (timer) timer.textContent = '00:00';
+    const status = jr_$('jr_status'); if (status) status.textContent = 'Bereit';
+    const live = jr_$('jr_liveChord'); if (live) live.textContent = '–';
+    const liveSec = jr_$('jr_liveSection'); if (liveSec) liveSec.style.display = 'none';
+    const resSec = jr_$('jr_resultSection'); if (resSec) resSec.style.display = 'none';
+    const warn = jr_$('jr_compatWarning'); if (warn) warn.style.display = 'none';
+    const btn = jr_$('jr_recordBtn');
+    if (btn) { btn.classList.remove('jr-recording'); btn.disabled = !jr_isSupported(); }
+  }
+
+  function jr_saveAsSong() {
+    if (!jr_state.chordEvents.length) return;
+    const now = new Date();
+    const pad = function (n) { return String(n).padStart(2, '0'); };
+    const title = '[BETA] Jam ' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+      ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    const mkId = function () {
+      return typeof uid === 'function'
+        ? uid()
+        : (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+    };
+    const chords = jr_state.chordEvents.map(function (ev, i) {
+      return { id: mkId(), chord: ev.chord, charIndex: i };
+    });
+    const song = {
+      id: mkId(),
+      title: title,
+      key: jr_state.resultKey || 'C',
+      bpm: null,
+      createdAt: now.toISOString(),
+      notes: 'Automatisch erzeugt vom Jam Recorder (Beta). Tonart und BPM sind Schätzungen.',
+      history: [],
+      sections: [{
+        id: mkId(),
+        type: 'Verse',
+        label: 'Jam',
+        lines: [{ id: mkId(), text: '', chords: chords }],
+        _spacerChords: {}
+      }]
+    };
+    if (typeof songs !== 'undefined' && Array.isArray(songs) && typeof saveSongs === 'function') {
+      songs.unshift(song);
+      saveSongs();
+      jr_log('saved as song', song.id);
+      if (typeof showSong === 'function') {
+        showSong(song.id);
+        return;
+      }
+      if (typeof showSongList === 'function') showSongList();
+      return;
+    }
+    alert('Song konnte nicht gespeichert werden (Song-System nicht erreichbar).');
+  }
+
+  // Expose globals needed by inline onclick attributes
+  window.jr_openView = jr_openView;
+  window.jr_close = jr_close;
+  window.jr_toggleRecording = jr_toggleRecording;
+  window.jr_resetForNewRecording = jr_resetForNewRecording;
+  window.jr_saveAsSong = jr_saveAsSong;
+})();
 </script>
 </body>
 </html>
