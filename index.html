@@ -333,6 +333,35 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
   font-weight: 700; font-family: 'Courier Prime', monospace;
   white-space: nowrap; line-height: 18px; cursor: pointer; z-index: 2;
 }
+/* ===== CHORD POSITION EDITOR (inside chord popup) ===== */
+#posEditorSection {
+  display: none; flex-direction: column; gap: 6px;
+  padding: 10px; margin: 6px 0 10px;
+  background: #16213e; border: 1px solid #2a2a4a; border-radius: 8px;
+}
+#chordPopup.edit-mode #posEditorSection { display: flex; }
+.pos-editor-row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.pos-editor-label {
+  font-size: 10px; color: #7a7a9a; text-transform: uppercase;
+  letter-spacing: 0.5px; white-space: nowrap;
+}
+.pos-editor-btn {
+  background: #1a1a2e; color: #f0ece2; border: 1px solid #2a2a4a;
+  border-radius: 6px; padding: 0 10px; font-size: 13px; font-weight: 600;
+  cursor: pointer; min-width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  white-space: nowrap; font-family: inherit;
+}
+.pos-editor-btn:hover { background: #0f3460; }
+.pos-editor-btn:active { transform: scale(0.96); }
+.pos-editor-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+.pos-editor-btn:disabled { opacity: 0.35; cursor: default; }
+.pos-editor-btn.step-btn { min-width: 44px; padding: 0; }
+
+body.light-mode #posEditorSection { background: #f5f5f0; border-color: #ddd; }
+body.light-mode .pos-editor-btn { background: #fff; color: #1a1a2e; border-color: #ddd; }
+body.light-mode .pos-editor-btn:hover { background: #eee; }
+body.light-mode .pos-editor-btn.active { background: #e94560; color: #fff; border-color: #e94560; }
 
 .text-display-row {
   font-family: 'Courier Prime', monospace; font-size: 15px;
@@ -345,15 +374,36 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
 .spacer-line { min-height: 4px; }
 
 /* ===== CHORD PICKER POPUP ===== */
+/* Desktop: compact floating modal, pinned to the right so songtext stays visible */
 #chordPopup {
-  position: fixed; top: 56px; left: 0; right: 0; bottom: 0; z-index: 200;
-  background: #1a1a2e; border-top: 1px solid #2a2a4a;
+  position: fixed; z-index: 200;
+  top: 80px; right: 20px;
+  width: 400px; max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 160px);
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a; border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.55);
   overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-  padding: 0 12px 24px;
-  transform: translateY(-100%); transition: transform 0.25s ease;
+  padding: 0 16px 16px;
+  transform: translateY(-16px); opacity: 0;
+  transition: transform 0.25s ease, opacity 0.2s ease;
   visibility: hidden;
 }
-#chordPopup.visible { transform: translateY(0); visibility: visible; }
+#chordPopup.visible { transform: translateY(0); opacity: 1; visibility: visible; }
+
+/* Mobile: keep the previous full-width top-sheet layout */
+@media (max-width: 768px) {
+  #chordPopup {
+    top: 56px; right: 0; left: 0; bottom: 0;
+    width: auto; max-width: none; max-height: none;
+    border: none; border-top: 1px solid #2a2a4a; border-radius: 0;
+    box-shadow: none;
+    padding: 0 12px 24px;
+    transform: translateY(-100%); opacity: 1;
+    transition: transform 0.25s ease;
+  }
+  #chordPopup.visible { transform: translateY(0); }
+}
 .chord-popup-header {
   position: sticky; top: 0; z-index: 1;
   display: flex; align-items: center; justify-content: space-between;
@@ -367,7 +417,10 @@ body.light-mode .assign-section-bar { background: #fff; border-color: #ddd; }
 }
 .chord-popup-header .popup-close-btn:hover { color: #e94560; }
 #chordPopup.edit-mode #chordDiagram { order: -1; }
-body.light-mode #chordPopup { background: #f5f5f0; border-top-color: #ddd; }
+body.light-mode #chordPopup { background: #f5f5f0; border-color: #ddd; }
+@media (max-width: 768px) {
+  body.light-mode #chordPopup { border-top-color: #ddd; }
+}
 body.light-mode .chord-popup-header { background: #f5f5f0; }
 body.light-mode .chord-popup-header .popup-chord-title { color: #1a1a2e; }
 body.light-mode #chordPopup .popup-actions { background: #f5f5f0; }
@@ -1233,6 +1286,22 @@ body.light-mode .settings-btn { border-color: #ddd; color: #999; }
     <button class="popup-close-btn" onclick="closeChordPopup()">&times;</button>
   </div>
   <div id="chordDiagram"></div>
+  <div id="posEditorSection">
+    <div class="pos-editor-row">
+      <span class="pos-editor-label">Position</span>
+      <span class="pos-editor-label" style="margin-left:8px">Schritt</span>
+      <button type="button" class="pos-editor-btn step-btn" data-step="1" onclick="setPositionStep(1)">1</button>
+      <button type="button" class="pos-editor-btn step-btn" data-step="3" onclick="setPositionStep(3)">3</button>
+      <button type="button" class="pos-editor-btn step-btn" data-step="5" onclick="setPositionStep(5)">5</button>
+    </div>
+    <div class="pos-editor-row">
+      <button type="button" class="pos-editor-btn" id="posEditorLeft" onclick="moveChordByStep(-1)" aria-label="Nach links" title="Nach links">&#9664;</button>
+      <button type="button" class="pos-editor-btn" id="posEditorRight" onclick="moveChordByStep(1)" aria-label="Nach rechts" title="Nach rechts">&#9654;</button>
+      <button type="button" class="pos-editor-btn" id="posEditorLineStart" onclick="jumpChordTo('lineStart')" title="Zeilenanfang">|&#9664;</button>
+      <button type="button" class="pos-editor-btn" id="posEditorPrevWord" onclick="jumpChordTo('prevWord')" title="Vorheriges Wort">&#9664; Wort</button>
+      <button type="button" class="pos-editor-btn" id="posEditorNextWord" onclick="jumpChordTo('nextWord')" title="N&auml;chstes Wort">Wort &#9654;</button>
+    </div>
+  </div>
   <div id="notePickerSection"></div>
   <div id="recentChordsSection"></div>
   <input type="text" id="chordInput" placeholder="Akkord eingeben..." autocomplete="off" autocapitalize="off" readonly inputmode="none">
@@ -1472,6 +1541,7 @@ let songs = [];
 let currentSongId = null;
 let currentTab = 'text';
 let editingChord = null;
+let positionStep = 1;
 let conflictResolve = null;
 let deleteSongId = null;
 let autocompleteIdx = -1;
@@ -2598,6 +2668,9 @@ function openChordPopup(value, x, y, showDelete) {
   renderQuickChords();
   renderChordDiagram(value);
 
+  // Position editor: only meaningful when editing an existing chord
+  if (showDelete) updatePositionEditorUI();
+
   // OK button: enabled only if a chord is already set (edit mode)
   document.getElementById('chordOkBtn').disabled = !value;
 
@@ -2737,6 +2810,116 @@ function deleteChord() {
 function closeChordPopup() {
   editingChord = null;
   document.getElementById('chordPopup').classList.remove('visible');
+}
+
+// ===============================================
+// CHORD POSITION EDITOR (integrated into chord popup)
+// ===============================================
+function getEditingLineText() {
+  if (!editingChord || editingChord.isSpacer) return '';
+  const song = getSong(currentSongId);
+  if (!song) return '';
+  const sec = song.sections.find(s => s.id === editingChord.secId);
+  if (!sec) return '';
+  const ln = sec.lines.find(l => l.id === editingChord.lineId);
+  return (ln && ln.text) || '';
+}
+
+function getEditingMaxPos() {
+  if (!editingChord) return 0;
+  if (editingChord.isSpacer) return SPACER_COLS - 1;
+  return Math.max(0, getEditingLineText().length);
+}
+
+function findEditingChordInData() {
+  if (!editingChord || !editingChord.chordId) return null;
+  const song = getSong(currentSongId);
+  if (!song) return null;
+  const sec = song.sections.find(s => s.id === editingChord.secId);
+  if (!sec) return null;
+  if (editingChord.isSpacer) {
+    if (!sec._spacerChords) return null;
+    const arr = sec._spacerChords[editingChord.spacerId] || [];
+    return arr.find(c => c.id === editingChord.chordId) || null;
+  }
+  const ln = sec.lines.find(l => l.id === editingChord.lineId);
+  if (!ln) return null;
+  return ln.chords.find(c => c.id === editingChord.chordId) || null;
+}
+
+function updatePositionEditorUI() {
+  if (!editingChord || !editingChord.chordId) return;
+  document.querySelectorAll('#posEditorSection .pos-editor-btn[data-step]').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.step, 10) === positionStep);
+  });
+  const max = getEditingMaxPos();
+  const pos = editingChord.charIndex;
+  document.getElementById('posEditorLeft').disabled = pos <= 0;
+  document.getElementById('posEditorRight').disabled = pos >= max;
+  document.getElementById('posEditorLineStart').disabled = pos <= 0;
+  const text = editingChord.isSpacer ? '' : getEditingLineText();
+  document.getElementById('posEditorPrevWord').disabled = !text || pos <= 0;
+  document.getElementById('posEditorNextWord').disabled = !text || pos >= max;
+}
+
+function setPositionStep(n) {
+  positionStep = n;
+  updatePositionEditorUI();
+}
+
+function moveChordByStep(dir) {
+  if (!editingChord || !editingChord.chordId) return;
+  const max = getEditingMaxPos();
+  let pos = editingChord.charIndex + dir * positionStep;
+  if (pos < 0) pos = 0;
+  if (pos > max) pos = max;
+  if (pos === editingChord.charIndex) return;
+  applyEditingChordPosition(pos);
+}
+
+function jumpChordTo(where) {
+  if (!editingChord || !editingChord.chordId) return;
+  const max = getEditingMaxPos();
+  const text = editingChord.isSpacer ? '' : getEditingLineText();
+  const cur = editingChord.charIndex;
+  let target = cur;
+  if (where === 'lineStart') target = 0;
+  else if (where === 'prevWord') target = findPrevWordStart(text, cur);
+  else if (where === 'nextWord') target = findNextWordStart(text, cur, max);
+  if (target < 0) target = 0;
+  if (target > max) target = max;
+  if (target === cur) return;
+  applyEditingChordPosition(target);
+}
+
+function applyEditingChordPosition(newPos) {
+  editingChord.charIndex = newPos;
+  const ch = findEditingChordInData();
+  if (ch) ch.charIndex = newPos;
+  const song = getSong(currentSongId);
+  if (song) addHistory(song, 'Akkord', 'Position geändert');
+  saveSongs();
+  renderChordTab();
+  updatePositionEditorUI();
+}
+
+function findPrevWordStart(text, cur) {
+  if (!text) return 0;
+  const clamp = Math.min(cur, text.length);
+  let i = clamp - 1;
+  while (i > 0 && /\s/.test(text[i])) i--;
+  while (i > 0 && !/\s/.test(text[i - 1])) i--;
+  if (i < 0) i = 0;
+  return i;
+}
+
+function findNextWordStart(text, cur, max) {
+  if (!text) return max;
+  let i = Math.max(0, cur);
+  while (i < text.length && !/\s/.test(text[i])) i++;
+  while (i < text.length && /\s/.test(text[i])) i++;
+  if (i >= text.length) return Math.min(max, text.length);
+  return i;
 }
 
 function updateAutocomplete() {
